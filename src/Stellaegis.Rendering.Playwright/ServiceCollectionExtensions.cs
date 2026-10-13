@@ -14,8 +14,8 @@ public static class ServiceCollectionExtensions
     /// browser, launched on the first PDF and confined as <see cref="PlaywrightRendererOptions"/> says.
     /// </summary>
     /// <remarks>
-    /// Chromium must be installed on the host:
-    /// <code>RUN dotnet tool install --global Microsoft.Playwright.CLI &amp;&amp; playwright install chromium --with-deps</code>
+    /// Chromium must be installed on the host, by the script Playwright places in the application's
+    /// output directory: <c>pwsh bin/Release/net10.0/playwright.ps1 install --with-deps chromium</c>.
     /// </remarks>
     /// <example>
     /// appsettings.json — the defaults:

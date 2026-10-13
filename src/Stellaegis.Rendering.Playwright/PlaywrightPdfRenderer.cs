@@ -15,9 +15,10 @@ namespace Stellaegis.Rendering.Playwright;
 /// template could have the host call an internal address and print the answer into the PDF.
 /// Images, fonts and styles are embedded in the HTML — inline, or as <c>data:</c> URLs.
 /// </para>
-/// <para><b>Docker setup:</b> the Playwright Chromium driver must be installed in the image:</para>
-/// <code>RUN dotnet tool install --global Microsoft.Playwright.CLI &amp;&amp; playwright install chromium --with-deps</code>
-/// <para>Or install via the NuGet post-build target with the env var <c>PLAYWRIGHT_BROWSERS_PATH</c>.</para>
+/// <para>
+/// Chromium is installed on the host by the script Playwright places in the application's output
+/// directory: <c>pwsh bin/Release/net10.0/playwright.ps1 install --with-deps chromium</c>.
+/// </para>
 /// </remarks>
 internal sealed class PlaywrightPdfRenderer(IOptions<PlaywrightRendererOptions> options) : IPdfRenderer, IAsyncDisposable
 {
