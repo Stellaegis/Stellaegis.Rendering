@@ -12,5 +12,11 @@
     <!-- Rendering -->
     <PackageVersion Include="Scriban" Version="7.2.5" />
     <PackageVersion Include="Microsoft.Playwright" Version="1.61.0" />
+    <!-- Testing -->
+    <PackageVersion Include="xunit.v3" Version="3.2.2" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.5" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.7.0" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration" Version="10.0.10" />
+    <PackageVersion Include="Microsoft.AspNetCore.TestHost" Version="10.0.10" />
   </ItemGroup>
 </Project>

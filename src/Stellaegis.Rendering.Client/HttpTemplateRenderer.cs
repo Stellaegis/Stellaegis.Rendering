@@ -22,6 +22,7 @@ internal sealed class HttpTemplateRenderer(HttpClient http) : ITemplateRenderer
         CancellationToken cancellationToken = default)
     {
         Guard.NotWhiteSpace(template);
+        Guard.Satisfies(data, d => d.ValueKind == JsonValueKind.Object, "The data must be a JSON object.");
 
         using var response = await http.PostAsJsonAsync(
             "html",
@@ -39,6 +40,7 @@ internal sealed class HttpTemplateRenderer(HttpClient http) : ITemplateRenderer
         CancellationToken cancellationToken = default)
     {
         Guard.NotWhiteSpace(template);
+        Guard.Satisfies(data, d => d.ValueKind == JsonValueKind.Object, "The data must be a JSON object.");
 
         using var response = await http.PostAsJsonAsync(
             "pdf",

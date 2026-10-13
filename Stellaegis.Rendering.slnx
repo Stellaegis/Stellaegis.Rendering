@@ -6,4 +6,7 @@
     <Project Path="src/Stellaegis.Rendering.Scriban/Stellaegis.Rendering.Scriban.csproj" />
     <Project Path="src/Stellaegis.Rendering/Stellaegis.Rendering.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Stellaegis.Rendering.Tests/Stellaegis.Rendering.Tests.csproj" />
+  </Folder>
 </Solution>
