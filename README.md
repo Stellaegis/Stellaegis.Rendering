@@ -162,7 +162,7 @@ default, Chromium is therefore confined:
 | --- | --- | --- |
 | `JavaScriptEnabled` | `false` | Scripts in the printed HTML do not run. |
 | `NetworkEnabled` | `false` | Every request the page makes is refused: images, fonts and styles must be embedded in the HTML, inline or as `data:` URLs. |
-| `Sandbox` | `true` | Chromium runs in its sandbox. A container running as root cannot start a sandboxed Chromium, and sets it to `false`. |
+| `Sandbox` | `true` | Chromium runs in its sandbox. See below for the machines where the sandbox cannot start. |
 
 These settings are read from the section `Stellaegis:Rendering:Playwright`. They belong to the host:
 a request cannot change them, since a request able to open the network would undo the confinement.
@@ -178,6 +178,18 @@ and whether backgrounds are printed.
   }
 }
 ```
+
+Chromium's sandbox cannot start on two kinds of Linux machine, and printing then fails with
+`No usable sandbox!`:
+
+- **a container running as root.** Run the container as another user, or set `Sandbox` to `false`;
+- **Ubuntu 23.10 and later**, and other distributions where AppArmor restricts unprivileged user
+  namespaces, which the sandbox needs. Allow them for Chromium — the
+  [Chromium documentation](https://chromium.googlesource.com/chromium/src/+/main/docs/security/apparmor-userns-restrictions.md)
+  describes how —, or set `Sandbox` to `false`.
+
+Setting `Sandbox` to `false` keeps the two other protections, JavaScript and network, and removes the
+isolation of Chromium from the rest of the machine. The choice is the host's to make.
 
 ## Errors
 

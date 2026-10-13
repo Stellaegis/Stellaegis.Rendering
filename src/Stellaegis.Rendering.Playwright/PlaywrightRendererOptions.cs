@@ -23,8 +23,10 @@ public sealed class PlaywrightRendererOptions
     public bool NetworkEnabled { get; init; }
 
     /// <summary>
-    /// Whether Chromium runs in its sandbox. Defaults to <c>true</c>. A container running as root
-    /// cannot start a sandboxed Chromium and sets it to <c>false</c>.
+    /// Whether Chromium runs in its sandbox. Defaults to <c>true</c>. The sandbox cannot start in a
+    /// container running as root, nor on Linux hosts where AppArmor restricts unprivileged user
+    /// namespaces (Ubuntu 23.10 and later) unless they are allowed for Chromium: such a host either
+    /// allows them or sets this to <c>false</c>.
     /// </summary>
     public bool Sandbox { get; init; } = true;
 }

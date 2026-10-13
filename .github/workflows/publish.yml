@@ -44,6 +44,12 @@ jobs:
       - name: Install Chromium
         run: pwsh tests/Stellaegis.Rendering.Tests/bin/Release/net10.0/playwright.ps1 install --with-deps chromium
 
+      # Chromium runs in its sandbox by default (PlaywrightRendererOptions.Sandbox), and Ubuntu 23.10+
+      # forbids the unprivileged user namespaces the sandbox needs. The tests run the default, so the
+      # runner allows them rather than the tests turning the sandbox off.
+      - name: Allow Chromium's sandbox
+        run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+
       # Quality gate: the tests must pass before anything is pushed. Without Chromium the PDF tests
       # would be skipped, and a version would ship with the confinement unproven: a skipped test
       # fails the run.
