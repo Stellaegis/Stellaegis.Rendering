@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Stellaegis.Documents.Client</RootNamespace>
+    <PackageId>Stellaegis.Documents.Client</PackageId>
+    <Description>Stellaegis HTTP client for the Documents API microservice (HTML + PDF rendering).</Description>
+    <PackageTags>stellaegis;documents;client;http;pdf;html</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Http" />
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" />
+    <ProjectReference Include="..\..\Stellaegis.Http\Stellaegis.Http.csproj" />
+  </ItemGroup>
+
+</Project>

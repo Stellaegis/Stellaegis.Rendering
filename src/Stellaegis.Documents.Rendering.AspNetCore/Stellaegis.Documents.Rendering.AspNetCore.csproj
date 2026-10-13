@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Stellaegis.Documents.Rendering.AspNetCore</RootNamespace>
+    <PackageId>Stellaegis.Documents.Rendering.AspNetCore</PackageId>
+    <Description>Stellaegis document rendering ASP.NET Core integration: stateless M2M host (scope "rendering") exposing template-to-HTML and template-to-PDF endpoints over Scriban + Playwright.</Description>
+    <PackageTags>stellaegis;documents;rendering;pdf;html;aspnetcore;m2m</PackageTags>
+    <Version>1.0.0</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Stellaegis.Documents.Rendering\Stellaegis.Documents.Rendering.csproj" />
+    <ProjectReference Include="..\..\Stellaegis.AspNetCore\Stellaegis.AspNetCore.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+</Project>
