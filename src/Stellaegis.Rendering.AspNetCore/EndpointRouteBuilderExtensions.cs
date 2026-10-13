@@ -33,7 +33,7 @@ namespace Stellaegis.Rendering.AspNetCore;
 /// <code>
 /// builder.Services.AddStellaegisRendering()
 ///     .AddStellaegisScribanRenderer()
-///     .AddStellaegisPlaywrightRenderer();
+///     .AddStellaegisPlaywrightRenderer(builder.Configuration);
 /// builder.Services.AddAuthentication(...);
 /// builder.Services.AddAuthorization(o => o.AddPolicy("rendering", p => ...));
 ///

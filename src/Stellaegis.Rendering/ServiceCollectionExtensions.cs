@@ -17,7 +17,7 @@ public static class ServiceCollectionExtensions
     /// <code>
     /// builder.Services.AddStellaegisRendering()
     ///     .AddStellaegisScribanRenderer()
-    ///     .AddStellaegisPlaywrightRenderer();
+    ///     .AddStellaegisPlaywrightRenderer(builder.Configuration);
     /// </code>
     /// </example>
     public static IServiceCollection AddStellaegisRendering(this IServiceCollection services)

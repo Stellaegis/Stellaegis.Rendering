@@ -1,0 +1,30 @@
+namespace Stellaegis.Rendering.Playwright;
+
+/// <summary>
+/// How far Chromium is confined while it prints a PDF.
+/// Bind from the <c>Stellaegis:Rendering:Playwright</c> configuration section.
+/// </summary>
+/// <remarks>
+/// These belong to the host and never to a request: on a remote host, the template comes from the
+/// caller, and a request able to open the network would undo the confinement.
+/// </remarks>
+public sealed class PlaywrightRendererOptions
+{
+    /// <summary>Default configuration section name: <c>Stellaegis:Rendering:Playwright</c>.</summary>
+    public const string SectionName = "Stellaegis:Rendering:Playwright";
+
+    /// <summary>Whether the printed HTML may run JavaScript. Defaults to <c>false</c>.</summary>
+    public bool JavaScriptEnabled { get; init; }
+
+    /// <summary>
+    /// Whether the printed HTML may load resources over the network — images, fonts, styles.
+    /// Defaults to <c>false</c>: resources are embedded in the HTML.
+    /// </summary>
+    public bool NetworkEnabled { get; init; }
+
+    /// <summary>
+    /// Whether Chromium runs in its sandbox. Defaults to <c>true</c>. A container running as root
+    /// cannot start a sandboxed Chromium and sets it to <c>false</c>.
+    /// </summary>
+    public bool Sandbox { get; init; } = true;
+}

@@ -32,7 +32,7 @@ internal sealed class TemplateRenderer(IHtmlRenderer html, IPdfRenderer? pdf = n
         if (pdf is null)
             throw new InvalidOperationException(
                 $"No {nameof(IPdfRenderer)} is registered. Register a PDF engine, " +
-                "such as AddStellaegisPlaywrightRenderer() from Stellaegis.Rendering.Playwright.");
+                "such as AddStellaegisPlaywrightRenderer from Stellaegis.Rendering.Playwright.");
 
         var rendered = await html.RenderAsync(template, data, cancellationToken);
         return await pdf.RenderAsync(rendered, options, cancellationToken);
