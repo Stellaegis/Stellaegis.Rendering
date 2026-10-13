@@ -1,6 +1,6 @@
 using Microsoft.Playwright;
 
-namespace Stellaegis.Documents.Rendering.Pdf;
+namespace Stellaegis.Rendering.Pdf;
 
 /// <summary>
 /// Renders HTML to PDF using a shared Playwright Chromium browser instance.

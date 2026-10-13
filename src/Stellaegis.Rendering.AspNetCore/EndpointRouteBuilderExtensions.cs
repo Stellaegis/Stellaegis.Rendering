@@ -2,9 +2,9 @@ using System.Text.Json;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
-using Stellaegis.Documents.Rendering.Pdf;
+using Stellaegis.Rendering.Pdf;
 
-namespace Stellaegis.Documents.Rendering.AspNetCore;
+namespace Stellaegis.Rendering.AspNetCore;
 
 /// <summary>
 /// Maps the rendering API: a template and its data rendered to HTML or to PDF over HTTP.
@@ -27,7 +27,7 @@ namespace Stellaegis.Documents.Rendering.AspNetCore;
 /// </remarks>
 /// <example>
 /// <code>
-/// builder.Services.AddStellaegisDocumentRendering();
+/// builder.Services.AddStellaegisRendering();
 /// builder.Services.AddAuthentication(...);
 /// builder.Services.AddAuthorization(o => o.AddPolicy("rendering", p => ...));
 ///

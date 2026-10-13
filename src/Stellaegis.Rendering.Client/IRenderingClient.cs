@@ -1,14 +1,14 @@
 using System.Text.Json;
 
-namespace Stellaegis.Documents.Client;
+namespace Stellaegis.Rendering.Client;
 
 /// <summary>
-/// Client for the Documents.Api rendering microservice.
+/// Client for the rendering API.
 /// </summary>
-public interface IDocumentsClient
+public interface IRenderingClient
 {
     /// <summary>
-    /// Sends a Scriban <paramref name="template"/> and its <paramref name="data"/> to Documents.Api
+    /// Sends a Scriban <paramref name="template"/> and its <paramref name="data"/> to the rendering API
     /// and returns the rendered HTML string.
     /// </summary>
     Task<string> RenderHtmlAsync(
@@ -17,7 +17,7 @@ public interface IDocumentsClient
         CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Sends a Scriban <paramref name="template"/> and its <paramref name="data"/> to Documents.Api
+    /// Sends a Scriban <paramref name="template"/> and its <paramref name="data"/> to the rendering API
     /// and returns the PDF as a byte array.
     /// </summary>
     Task<byte[]> RenderPdfAsync(

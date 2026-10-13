@@ -2,14 +2,14 @@
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
-    <RootNamespace>Stellaegis.Documents.Rendering.AspNetCore</RootNamespace>
-    <PackageId>Stellaegis.Documents.Rendering.AspNetCore</PackageId>
+    <RootNamespace>Stellaegis.Rendering.AspNetCore</RootNamespace>
+    <PackageId>Stellaegis.Rendering.AspNetCore</PackageId>
     <Description>Stellaegis rendering ASP.NET Core integration: maps the template-to-HTML and template-to-PDF endpoints, behind an authorization policy or explicitly anonymous.</Description>
-    <PackageTags>stellaegis;documents;rendering;pdf;html;aspnetcore</PackageTags>
+    <PackageTags>stellaegis;rendering;pdf;html;aspnetcore</PackageTags>
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Stellaegis.Documents.Rendering\Stellaegis.Documents.Rendering.csproj" />
+    <ProjectReference Include="..\Stellaegis.Rendering\Stellaegis.Rendering.csproj" />
   </ItemGroup>
 
   <ItemGroup>

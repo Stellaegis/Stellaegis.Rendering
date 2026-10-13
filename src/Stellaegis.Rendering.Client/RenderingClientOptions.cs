@@ -1,10 +1,10 @@
-namespace Stellaegis.Documents.Client;
+namespace Stellaegis.Rendering.Client;
 
 /// <summary>
 /// Configuration for the rendering API client.
 /// Bind from the <c>Stellaegis:Rendering:Client</c> configuration section.
 /// </summary>
-public sealed class DocumentsClientOptions
+public sealed class RenderingClientOptions
 {
     /// <summary>Default configuration section name: <c>Stellaegis:Rendering:Client</c>.</summary>
     public const string SectionName = "Stellaegis:Rendering:Client";

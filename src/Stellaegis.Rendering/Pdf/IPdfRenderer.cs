@@ -1,4 +1,4 @@
-namespace Stellaegis.Documents.Rendering.Pdf;
+namespace Stellaegis.Rendering.Pdf;
 
 /// <summary>
 /// Renders an HTML string to PDF bytes using a headless browser.

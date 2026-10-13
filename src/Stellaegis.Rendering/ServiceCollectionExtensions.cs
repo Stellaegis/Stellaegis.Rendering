@@ -1,11 +1,11 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Stellaegis.Documents.Rendering.Pdf;
+using Stellaegis.Rendering.Pdf;
 
-namespace Stellaegis.Documents.Rendering;
+namespace Stellaegis.Rendering;
 
 /// <summary>
-/// Dependency injection helpers for Stellaegis.Documents.Rendering.
+/// Dependency injection helpers for Stellaegis.Rendering.
 /// </summary>
 public static class ServiceCollectionExtensions
 {
@@ -17,7 +17,7 @@ public static class ServiceCollectionExtensions
     /// Docker setup: ensure Chromium is installed in the image.
     /// <code>RUN dotnet tool install --global Microsoft.Playwright.CLI &amp;&amp; playwright install chromium --with-deps</code>
     /// </remarks>
-    public static IServiceCollection AddStellaegisDocumentRendering(this IServiceCollection services)
+    public static IServiceCollection AddStellaegisRendering(this IServiceCollection services)
     {
         services.TryAddSingleton<IHtmlRenderer, ScribanHtmlRenderer>();
         services.TryAddSingleton<IPdfRenderer, PlaywrightPdfRenderer>();

@@ -1,13 +1,13 @@
 using System.Net.Http.Json;
 using System.Text.Json;
 
-namespace Stellaegis.Documents.Client;
+namespace Stellaegis.Rendering.Client;
 
-internal sealed class DocumentsClient : IDocumentsClient
+internal sealed class RenderingClient : IRenderingClient
 {
     private readonly HttpClient _http;
 
-    public DocumentsClient(HttpClient http) => _http = http;
+    public RenderingClient(HttpClient http) => _http = http;
 
     public async Task<string> RenderHtmlAsync(
         string template,

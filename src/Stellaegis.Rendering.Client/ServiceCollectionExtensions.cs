@@ -2,15 +2,15 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
-namespace Stellaegis.Documents.Client;
+namespace Stellaegis.Rendering.Client;
 
 /// <summary>
-/// Dependency injection helpers for Stellaegis.Documents.Client.
+/// Dependency injection helpers for Stellaegis.Rendering.Client.
 /// </summary>
 public static class ServiceCollectionExtensions
 {
     /// <summary>
-    /// Registers <see cref="IDocumentsClient"/> backed by an HTTP client targeting the rendering API.
+    /// Registers <see cref="IRenderingClient"/> backed by an HTTP client targeting the rendering API.
     /// </summary>
     /// <remarks>
     /// The client sends requests as they are: authenticating them is the caller's concern. Add a
@@ -28,21 +28,21 @@ public static class ServiceCollectionExtensions
     /// </code>
     /// Program.cs:
     /// <code>
-    /// builder.Services.AddStellaegisDocumentsClient(builder.Configuration)
+    /// builder.Services.AddStellaegisRenderingClient(builder.Configuration)
     ///     .AddHttpMessageHandler&lt;MyTokenHandler&gt;();
     /// </code>
     /// </example>
     /// <returns>The builder of the underlying HTTP client, to add handlers to.</returns>
-    public static IHttpClientBuilder AddStellaegisDocumentsClient(
+    public static IHttpClientBuilder AddStellaegisRenderingClient(
         this IServiceCollection services,
         IConfiguration configuration,
-        string sectionName = DocumentsClientOptions.SectionName)
+        string sectionName = RenderingClientOptions.SectionName)
     {
-        services.Configure<DocumentsClientOptions>(configuration.GetSection(sectionName));
+        services.Configure<RenderingClientOptions>(configuration.GetSection(sectionName));
 
-        return services.AddHttpClient<IDocumentsClient, DocumentsClient>((sp, http) =>
+        return services.AddHttpClient<IRenderingClient, RenderingClient>((sp, http) =>
         {
-            var opts = sp.GetRequiredService<IOptions<DocumentsClientOptions>>().Value;
+            var opts = sp.GetRequiredService<IOptions<RenderingClientOptions>>().Value;
             http.BaseAddress = new Uri(opts.BaseUrl.TrimEnd('/') + "/");
             http.Timeout     = opts.Timeout;
         });

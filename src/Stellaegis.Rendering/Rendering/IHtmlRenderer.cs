@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace Stellaegis.Documents.Rendering;
+namespace Stellaegis.Rendering;
 
 /// <summary>
 /// Renders a Scriban template against a JSON data model and returns the HTML output.

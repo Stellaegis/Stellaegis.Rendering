@@ -2,7 +2,7 @@ using System.Text.Json;
 using Scriban;
 using Scriban.Runtime;
 
-namespace Stellaegis.Documents.Rendering;
+namespace Stellaegis.Rendering;
 
 /// <summary>
 /// Renders Scriban templates to HTML strings.

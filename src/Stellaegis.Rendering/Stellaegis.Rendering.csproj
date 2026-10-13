@@ -2,10 +2,10 @@
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
-    <RootNamespace>Stellaegis.Documents.Rendering</RootNamespace>
-    <PackageId>Stellaegis.Documents.Rendering</PackageId>
-    <Description>Stellaegis document rendering: HTML via Scriban templates, PDF via Playwright (Chromium headless).</Description>
-    <PackageTags>stellaegis;documents;pdf;html;scriban;playwright;rendering</PackageTags>
+    <RootNamespace>Stellaegis.Rendering</RootNamespace>
+    <PackageId>Stellaegis.Rendering</PackageId>
+    <Description>Stellaegis rendering: HTML via Scriban templates, PDF via Playwright (Chromium headless).</Description>
+    <PackageTags>stellaegis;pdf;html;scriban;playwright;rendering</PackageTags>
   </PropertyGroup>
 
   <ItemGroup>

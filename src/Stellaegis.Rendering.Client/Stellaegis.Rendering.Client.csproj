@@ -2,10 +2,10 @@
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
-    <RootNamespace>Stellaegis.Documents.Client</RootNamespace>
-    <PackageId>Stellaegis.Documents.Client</PackageId>
+    <RootNamespace>Stellaegis.Rendering.Client</RootNamespace>
+    <PackageId>Stellaegis.Rendering.Client</PackageId>
     <Description>Stellaegis HTTP client for the rendering API: template to HTML and template to PDF.</Description>
-    <PackageTags>stellaegis;documents;client;http;pdf;html</PackageTags>
+    <PackageTags>stellaegis;client;http;pdf;html</PackageTags>
   </PropertyGroup>
 
   <ItemGroup>
