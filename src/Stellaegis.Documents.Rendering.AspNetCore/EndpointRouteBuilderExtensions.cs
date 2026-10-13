@@ -1,0 +1,104 @@
+using System.Text.Json;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Routing;
+using Stellaegis.Documents.Rendering.Pdf;
+
+namespace Stellaegis.Documents.Rendering.AspNetCore;
+
+/// <summary>
+/// Maps the rendering API: a template and its data rendered to HTML or to PDF over HTTP.
+/// </summary>
+/// <remarks>
+/// <para>
+/// Two endpoints, relative to the builder they are mapped on:
+/// </para>
+/// <list type="bullet">
+///   <item><c>POST rendering/html</c> — render a template to HTML</item>
+///   <item><c>POST rendering/pdf</c>  — render a template to PDF</item>
+/// </list>
+/// <para>
+/// Each request carries its own template, and rendering a PDF runs a browser on the host, so access
+/// is never left implicit: either name the authorization policy that protects the endpoints, or open
+/// them deliberately with <see cref="MapRenderingEndpointsAnonymous"/>. Everything else about the
+/// host — authentication schemes, CORS, rate limiting, forwarded headers, health checks — is the
+/// caller's to configure.
+/// </para>
+/// </remarks>
+/// <example>
+/// <code>
+/// builder.Services.AddStellaegisDocumentRendering();
+/// builder.Services.AddAuthentication(...);
+/// builder.Services.AddAuthorization(o => o.AddPolicy("rendering", p => ...));
+///
+/// var app = builder.Build();
+/// app.UseAuthentication();
+/// app.UseAuthorization();
+/// app.MapGroup("/api").MapRenderingEndpoints(authorizationPolicy: "rendering");
+/// </code>
+/// </example>
+public static class EndpointRouteBuilderExtensions
+{
+    /// <summary>
+    /// Maps the rendering endpoints, each call required to satisfy <paramref name="authorizationPolicy"/>.
+    /// </summary>
+    /// <param name="endpoints">The builder to map the endpoints on — the application, or a route group.</param>
+    /// <param name="authorizationPolicy">Name of the authorization policy every call must satisfy.</param>
+    /// <returns>The group holding the endpoints, for further conventions.</returns>
+    public static RouteGroupBuilder MapRenderingEndpoints(this IEndpointRouteBuilder endpoints, string authorizationPolicy)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(authorizationPolicy);
+        return MapEndpoints(endpoints).RequireAuthorization(authorizationPolicy);
+    }
+
+    /// <summary>
+    /// Maps the rendering endpoints with no authorization at all: anyone who can reach the host can
+    /// have it render any template. Meant for hosts reachable only from a trusted network.
+    /// </summary>
+    /// <param name="endpoints">The builder to map the endpoints on — the application, or a route group.</param>
+    /// <returns>The group holding the endpoints, for further conventions.</returns>
+    public static RouteGroupBuilder MapRenderingEndpointsAnonymous(this IEndpointRouteBuilder endpoints) =>
+        MapEndpoints(endpoints).AllowAnonymous();
+
+    private static RouteGroupBuilder MapEndpoints(IEndpointRouteBuilder endpoints)
+    {
+        ArgumentNullException.ThrowIfNull(endpoints);
+
+        var group = endpoints.MapGroup("rendering");
+
+        group.MapPost("/html", async (
+                RenderRequest request,
+                IHtmlRenderer html,
+                CancellationToken ct) =>
+            {
+                if (string.IsNullOrWhiteSpace(request.Template))
+                    return Results.BadRequest("A non-empty 'template' is required.");
+
+                var rendered = await html.RenderAsync(request.Template, request.Data, ct);
+                return Results.Text(rendered, "text/html");
+            })
+            .WithName("RenderHtml");
+
+        group.MapPost("/pdf", async (
+                RenderRequest request,
+                IHtmlRenderer html,
+                IPdfRenderer pdf,
+                CancellationToken ct) =>
+            {
+                if (string.IsNullOrWhiteSpace(request.Template))
+                    return Results.BadRequest("A non-empty 'template' is required.");
+
+                var rendered = await html.RenderAsync(request.Template, request.Data, ct);
+                var bytes = await pdf.RenderAsync(rendered, cancellationToken: ct);
+                return Results.Bytes(bytes, "application/pdf");
+            })
+            .WithName("RenderPdf");
+
+        return group;
+    }
+}
+
+/// <summary>
+/// Render request payload — a Scriban template and the JSON data model bound to it.
+/// </summary>
+public sealed record RenderRequest(string Template, JsonElement Data);
