@@ -4,7 +4,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <RootNamespace>Stellaegis.Documents.Client</RootNamespace>
     <PackageId>Stellaegis.Documents.Client</PackageId>
-    <Description>Stellaegis HTTP client for the Documents API microservice (HTML + PDF rendering).</Description>
+    <Description>Stellaegis HTTP client for the rendering API: template to HTML and template to PDF.</Description>
     <PackageTags>stellaegis;documents;client;http;pdf;html</PackageTags>
   </PropertyGroup>
 
@@ -12,7 +12,6 @@
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
     <PackageReference Include="Microsoft.Extensions.Http" />
     <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" />
-    <ProjectReference Include="..\..\Stellaegis.Http\Stellaegis.Http.csproj" />
   </ItemGroup>
 
 </Project>

@@ -1,7 +1,6 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using Stellaegis.Http;
 
 namespace Stellaegis.Documents.Client;
 
@@ -11,47 +10,41 @@ namespace Stellaegis.Documents.Client;
 public static class ServiceCollectionExtensions
 {
     /// <summary>
-    /// Registers <see cref="IDocumentsClient"/> with M2M authentication via <see cref="M2MTokenProvider"/>.
-    /// Requires <see cref="M2MTokenProvider"/> to be registered (call <c>AddStellaegisM2M()</c> first).
+    /// Registers <see cref="IDocumentsClient"/> backed by an HTTP client targeting the rendering API.
     /// </summary>
+    /// <remarks>
+    /// The client sends requests as they are: authenticating them is the caller's concern. Add a
+    /// <see cref="System.Net.Http.DelegatingHandler"/> to the returned builder to attach a token, an
+    /// API key, or anything else the rendering host requires.
+    /// </remarks>
     /// <example>
     /// appsettings.json:
     /// <code>
     /// "Stellaegis": {
-    ///   "M2M": { "TokenEndpoint": "...", "ClientId": "...", "ClientSecret": "..." },
-    ///   "Documents": { "BaseUrl": "https://rendering.api.stellaegis.local/api/rendering/", "Scope": "rendering" }
+    ///   "Rendering": {
+    ///     "Client": { "BaseUrl": "https://rendering.example.com/api/rendering/" }
+    ///   }
     /// }
     /// </code>
     /// Program.cs:
     /// <code>
-    /// builder.Services.AddStellaegisM2M(builder.Configuration);
-    /// builder.Services.AddStellaegisDocumentsClient(builder.Configuration);
+    /// builder.Services.AddStellaegisDocumentsClient(builder.Configuration)
+    ///     .AddHttpMessageHandler&lt;MyTokenHandler&gt;();
     /// </code>
     /// </example>
-    public static IServiceCollection AddStellaegisDocumentsClient(
+    /// <returns>The builder of the underlying HTTP client, to add handlers to.</returns>
+    public static IHttpClientBuilder AddStellaegisDocumentsClient(
         this IServiceCollection services,
         IConfiguration configuration,
         string sectionName = DocumentsClientOptions.SectionName)
     {
-        if (!services.Any(d => d.ServiceType == typeof(M2MTokenProvider)))
-            throw new InvalidOperationException(
-                "M2MTokenProvider is not registered. Call AddStellaegisM2M() before AddStellaegisDocumentsClient().");
-
         services.Configure<DocumentsClientOptions>(configuration.GetSection(sectionName));
 
-        services.AddHttpClient<IDocumentsClient, DocumentsClient>((sp, http) =>
+        return services.AddHttpClient<IDocumentsClient, DocumentsClient>((sp, http) =>
         {
             var opts = sp.GetRequiredService<IOptions<DocumentsClientOptions>>().Value;
             http.BaseAddress = new Uri(opts.BaseUrl.TrimEnd('/') + "/");
             http.Timeout     = opts.Timeout;
-        })
-        .AddHttpMessageHandler(sp =>
-        {
-            var opts     = sp.GetRequiredService<IOptions<DocumentsClientOptions>>().Value;
-            var provider = sp.GetRequiredService<M2MTokenProvider>();
-            return new M2MTokenHandler(provider, opts.Scope);
         });
-
-        return services;
     }
 }
