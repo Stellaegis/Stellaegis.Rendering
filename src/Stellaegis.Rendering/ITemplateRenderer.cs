@@ -17,7 +17,8 @@ public interface ITemplateRenderer
     /// Renders <paramref name="template"/> with <paramref name="data"/> as root context, to HTML.
     /// </summary>
     /// <param name="template">Template source.</param>
-    /// <param name="data">Data model exposed to the template as top-level variables.</param>
+    /// <param name="data">Data model, a JSON object: each property is a top-level variable of the
+    /// template, under its JSON name unchanged.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     Task<string> RenderHtmlAsync(
         string template,
@@ -29,7 +30,8 @@ public interface ITemplateRenderer
     /// single call — a remote adapter sends the template and receives the PDF, never the HTML.
     /// </summary>
     /// <param name="template">Template source, rendering a full HTML document.</param>
-    /// <param name="data">Data model exposed to the template as top-level variables.</param>
+    /// <param name="data">Data model, a JSON object: each property is a top-level variable of the
+    /// template, under its JSON name unchanged.</param>
     /// <param name="options">Optional paper format and margin settings.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     Task<byte[]> RenderPdfAsync(

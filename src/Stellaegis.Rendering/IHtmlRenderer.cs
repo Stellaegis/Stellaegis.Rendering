@@ -12,7 +12,8 @@ public interface IHtmlRenderer
     /// Renders the given <paramref name="template"/> with <paramref name="data"/> as root context.
     /// </summary>
     /// <param name="template">Template source (inline string or pre-loaded content).</param>
-    /// <param name="data">Data model exposed to the template as top-level variables.</param>
+    /// <param name="data">Data model, a JSON object: each property is a top-level variable of the
+    /// template, under its JSON name unchanged.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     Task<string> RenderAsync(
         string template,

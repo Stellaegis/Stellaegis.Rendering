@@ -1,4 +1,5 @@
 using Microsoft.Playwright;
+using Stellaegis.Primitives;
 
 namespace Stellaegis.Rendering.Playwright;
 
@@ -23,6 +24,8 @@ internal sealed class PlaywrightPdfRenderer : IPdfRenderer, IAsyncDisposable
         PdfOptions? options = null,
         CancellationToken cancellationToken = default)
     {
+        Guard.NotWhiteSpace(html);
+
         var browser = await EnsureBrowserAsync(cancellationToken);
         var page    = await browser.NewPageAsync().WaitAsync(cancellationToken);
         try

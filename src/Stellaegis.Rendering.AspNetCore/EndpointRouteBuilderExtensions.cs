@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
@@ -76,8 +77,8 @@ public static class EndpointRouteBuilderExtensions
                 ITemplateRenderer renderer,
                 CancellationToken ct) =>
             {
-                if (string.IsNullOrWhiteSpace(request.Template))
-                    return Results.BadRequest("A non-empty 'template' is required.");
+                if (Validate(request.Template, request.Data) is { } error)
+                    return Results.BadRequest(error);
 
                 var rendered = await renderer.RenderHtmlAsync(request.Template, request.Data, ct);
                 return Results.Text(rendered, "text/html");
@@ -89,8 +90,8 @@ public static class EndpointRouteBuilderExtensions
                 ITemplateRenderer renderer,
                 CancellationToken ct) =>
             {
-                if (string.IsNullOrWhiteSpace(request.Template))
-                    return Results.BadRequest("A non-empty 'template' is required.");
+                if (Validate(request.Template, request.Data) is { } error)
+                    return Results.BadRequest(error);
 
                 var bytes = await renderer.RenderPdfAsync(request.Template, request.Data, request.Options, ct);
                 return Results.Bytes(bytes, "application/pdf");
@@ -98,5 +99,14 @@ public static class EndpointRouteBuilderExtensions
             .WithName("RenderPdf");
 
         return group;
+    }
+
+    private static string? Validate(string? template, JsonElement data)
+    {
+        if (string.IsNullOrWhiteSpace(template))
+            return "A non-empty 'template' is required.";
+        if (data.ValueKind != JsonValueKind.Object)
+            return "'data' must be a JSON object.";
+        return null;
     }
 }

@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Stellaegis.Primitives;
 
 namespace Stellaegis.Rendering;
 
@@ -26,6 +27,8 @@ internal sealed class TemplateRenderer(IHtmlRenderer html, IPdfRenderer? pdf = n
         PdfOptions? options = null,
         CancellationToken cancellationToken = default)
     {
+        Guard.NotWhiteSpace(template);
+
         if (pdf is null)
             throw new InvalidOperationException(
                 $"No {nameof(IPdfRenderer)} is registered. Register a PDF engine, " +

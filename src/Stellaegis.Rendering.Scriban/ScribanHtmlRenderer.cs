@@ -1,14 +1,25 @@
 using System.Text.Json;
 using Scriban;
 using Scriban.Runtime;
+using Scriban.Syntax;
+using Stellaegis.Primitives;
 
 namespace Stellaegis.Rendering.Scriban;
 
 /// <summary>
 /// Renders Scriban templates to HTML strings.
-/// JSON properties are mapped to Scriban top-level variables using snake_case keys.
 /// </summary>
-/// <inheritdoc cref="IHtmlRenderer"/>
+/// <remarks>
+/// <para>
+/// Each property of the JSON data becomes a top-level variable under its JSON name, unchanged:
+/// <c>{"customer_name": …}</c> is <c>customer_name</c>, <c>{"customerName": …}</c> is
+/// <c>customerName</c>.
+/// </para>
+/// <para>
+/// Values are inserted as they are, <b>not HTML-escaped</b>: a value holding markup becomes markup.
+/// A template escapes a value with <c>{{ value | html.escape }}</c>.
+/// </para>
+/// </remarks>
 internal sealed class ScribanHtmlRenderer : IHtmlRenderer
 {
     /// <inheritdoc />
@@ -17,15 +28,29 @@ internal sealed class ScribanHtmlRenderer : IHtmlRenderer
         JsonElement data,
         CancellationToken cancellationToken = default)
     {
+        Guard.NotWhiteSpace(template);
+        Guard.Satisfies(data, d => d.ValueKind == JsonValueKind.Object, "The data must be a JSON object.");
+
         var tpl = Template.Parse(template);
         if (tpl.HasErrors)
             throw new InvalidOperationException(
                 $"Template parse error(s): {string.Join("; ", tpl.Messages)}");
 
-        var context = new TemplateContext { StrictVariables = false };
+        var context = new TemplateContext
+        {
+            StrictVariables   = false,
+            CancellationToken = cancellationToken
+        };
         context.PushGlobal(ToScriptObject(data));
 
-        return await tpl.RenderAsync(context);
+        try
+        {
+            return await tpl.RenderAsync(context);
+        }
+        catch (ScriptAbortException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw new OperationCanceledException(cancellationToken);
+        }
     }
 
     private static ScriptObject ToScriptObject(JsonElement element)
