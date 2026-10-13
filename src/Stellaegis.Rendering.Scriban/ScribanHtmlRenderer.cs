@@ -33,7 +33,7 @@ internal sealed class ScribanHtmlRenderer : IHtmlRenderer
 
         var tpl = Template.Parse(template);
         if (tpl.HasErrors)
-            throw new InvalidOperationException(
+            throw new TemplateException(
                 $"Template parse error(s): {string.Join("; ", tpl.Messages)}");
 
         var context = new TemplateContext
@@ -50,6 +50,10 @@ internal sealed class ScribanHtmlRenderer : IHtmlRenderer
         catch (ScriptAbortException) when (cancellationToken.IsCancellationRequested)
         {
             throw new OperationCanceledException(cancellationToken);
+        }
+        catch (ScriptRuntimeException e) when (e is not ScriptAbortException)
+        {
+            throw new TemplateException($"Template runtime error: {e.Message}", e);
         }
     }
 

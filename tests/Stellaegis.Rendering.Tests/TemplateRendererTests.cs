@@ -77,6 +77,22 @@ public sealed class TemplateRendererTests(ChromiumFixture chromium) : IClassFixt
 
     [Theory]
     [MemberData(nameof(Modes))]
+    public async Task A_template_at_fault_throws_TemplateException(string mode)
+    {
+        await using var session = await StartAsync(mode);
+        var ct = TestContext.Current.CancellationToken;
+
+        var parse = await Assert.ThrowsAsync<TemplateException>(
+            () => session.Renderer.RenderHtmlAsync("{{ if }}", Json("{}"), ct));
+        Assert.StartsWith("Template parse error(s):", parse.Message);
+
+        var runtime = await Assert.ThrowsAsync<TemplateException>(
+            () => session.Renderer.RenderHtmlAsync("{{ x.y.z() }}", Json("{}"), ct));
+        Assert.StartsWith("Template runtime error:", runtime.Message);
+    }
+
+    [Theory]
+    [MemberData(nameof(Modes))]
     public async Task A_PDF_is_rendered_in_a_single_call_with_its_paper_format(string mode)
     {
         Assert.SkipWhen(chromium.Unavailable is not null, chromium.Unavailable ?? "");

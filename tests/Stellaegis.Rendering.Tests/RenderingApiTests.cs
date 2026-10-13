@@ -66,6 +66,24 @@ public sealed class RenderingApiTests
         }
     }
 
+    /// <remarks>
+    /// Checked on the raw answer: the in-memory host throws an exception the endpoint lets escape
+    /// straight into the client, so a client-side test alone would pass without the 400.
+    /// </remarks>
+    [Fact]
+    public async Task A_template_at_fault_is_answered_400_with_its_problem_type()
+    {
+        await using var session = await StartRemoteAsync(app => app.MapGroup("/api").MapRenderingEndpointsAnonymous());
+        var ct = TestContext.Current.CancellationToken;
+
+        using var response = await session.HttpClient!.PostAsJsonAsync(
+            "/api/rendering/html", new { template = "{{ if }}", data = new { } }, ct);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
+        Assert.Contains(TemplateException.ProblemType, await response.Content.ReadAsStringAsync(ct));
+    }
+
     [Fact]
     public async Task A_failure_keeps_what_the_host_answered()
     {

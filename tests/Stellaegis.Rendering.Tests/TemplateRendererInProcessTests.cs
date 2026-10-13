@@ -36,14 +36,4 @@ public sealed class TemplateRendererInProcessTests
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => services.GetRequiredService<ITemplateRenderer>()
             .RenderHtmlAsync("{{ for i in 1..10 }}{{ i }}{{ end }}", Json("{}"), cancelled.Token));
     }
-
-    [Fact]
-    public async Task A_template_that_does_not_parse_says_why()
-    {
-        await using var services = HtmlOnly();
-
-        var error = await Assert.ThrowsAsync<InvalidOperationException>(() => services.GetRequiredService<ITemplateRenderer>()
-            .RenderHtmlAsync("{{ if }}", Json("{}"), TestContext.Current.CancellationToken));
-        Assert.StartsWith("Template parse error(s):", error.Message);
-    }
 }

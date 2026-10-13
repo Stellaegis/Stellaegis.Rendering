@@ -52,7 +52,8 @@ internal sealed class HttpTemplateRenderer(HttpClient http) : ITemplateRenderer
 
     /// <summary>
     /// Like <see cref="HttpResponseMessage.EnsureSuccessStatusCode"/>, but keeps what the host said:
-    /// a <c>400</c> names the faulty field, which the status code alone does not.
+    /// a <c>400</c> names the faulty field, which the status code alone does not. A template at fault
+    /// is raised as <see cref="TemplateException"/>, as it is in process.
     /// </summary>
     private static async Task EnsureSuccessAsync(HttpResponseMessage response, CancellationToken ct)
     {
@@ -60,6 +61,11 @@ internal sealed class HttpTemplateRenderer(HttpClient http) : ITemplateRenderer
             return;
 
         var body = await response.Content.ReadAsStringAsync(ct);
+
+        if (response.Content.Headers.ContentType?.MediaType == "application/problem+json"
+            && TryReadProblem(body) is { Type: TemplateException.ProblemType } problem)
+            throw new TemplateException(problem.Detail ?? "The template is at fault.");
+
         if (body.Length > MaxQuotedErrorLength)
             body = body[..MaxQuotedErrorLength] + "…";
 
@@ -68,4 +74,19 @@ internal sealed class HttpTemplateRenderer(HttpClient http) : ITemplateRenderer
             inner: null,
             response.StatusCode);
     }
+
+    private static Problem? TryReadProblem(string body)
+    {
+        try
+        {
+            return JsonSerializer.Deserialize<Problem>(body, JsonSerializerOptions.Web);
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>The two fields of an RFC 9457 problem the client reads.</summary>
+    private sealed record Problem(string? Type, string? Detail);
 }

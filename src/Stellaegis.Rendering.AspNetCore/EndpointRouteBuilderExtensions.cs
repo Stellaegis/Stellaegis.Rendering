@@ -80,10 +80,18 @@ public static class EndpointRouteBuilderExtensions
                 if (Validate(request.Template, request.Data) is { } error)
                     return Results.BadRequest(error);
 
-                var rendered = await renderer.RenderHtmlAsync(request.Template, request.Data, ct);
-                return Results.Text(rendered, "text/html");
+                try
+                {
+                    var rendered = await renderer.RenderHtmlAsync(request.Template, request.Data, ct);
+                    return Results.Text(rendered, "text/html");
+                }
+                catch (TemplateException e)
+                {
+                    return TemplateProblem(e);
+                }
             })
-            .WithName("RenderHtml");
+            .WithName("RenderHtml")
+            .ProducesProblem(StatusCodes.Status400BadRequest);
 
         group.MapPost("/pdf", async (
                 RenderPdfRequest request,
@@ -93,13 +101,32 @@ public static class EndpointRouteBuilderExtensions
                 if (Validate(request.Template, request.Data) is { } error)
                     return Results.BadRequest(error);
 
-                var bytes = await renderer.RenderPdfAsync(request.Template, request.Data, request.Options, ct);
-                return Results.Bytes(bytes, "application/pdf");
+                try
+                {
+                    var bytes = await renderer.RenderPdfAsync(request.Template, request.Data, request.Options, ct);
+                    return Results.Bytes(bytes, "application/pdf");
+                }
+                catch (TemplateException e)
+                {
+                    return TemplateProblem(e);
+                }
             })
-            .WithName("RenderPdf");
+            .WithName("RenderPdf")
+            .ProducesProblem(StatusCodes.Status400BadRequest);
 
         return group;
     }
+
+    /// <summary>
+    /// A template at fault is the caller's to fix: <c>400</c>, with a problem type the client
+    /// recognises to raise <see cref="TemplateException"/> again.
+    /// </summary>
+    private static IResult TemplateProblem(TemplateException e) =>
+        Results.Problem(
+            detail: e.Message,
+            statusCode: StatusCodes.Status400BadRequest,
+            title: "The template is at fault.",
+            type: TemplateException.ProblemType);
 
     private static string? Validate(string? template, JsonElement data)
     {

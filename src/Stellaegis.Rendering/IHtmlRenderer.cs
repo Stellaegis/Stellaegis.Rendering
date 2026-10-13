@@ -15,6 +15,7 @@ public interface IHtmlRenderer
     /// <param name="data">Data model, a JSON object: each property is a top-level variable of the
     /// template, under its JSON name unchanged.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
+    /// <exception cref="TemplateException">The template does not parse, or fails while rendering.</exception>
     Task<string> RenderAsync(
         string template,
         JsonElement data,
