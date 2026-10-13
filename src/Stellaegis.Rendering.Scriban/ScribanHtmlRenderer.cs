@@ -65,12 +65,23 @@ internal sealed class ScribanHtmlRenderer : IHtmlRenderer
         return obj;
     }
 
+    /// <summary>
+    /// An integer stays an integer; any other number is a <see cref="decimal"/>, exact as written —
+    /// an amount is computed and frozen upstream, and a template displays it, it does not round it
+    /// again through binary floating point. Only a number beyond the range of <see cref="decimal"/>
+    /// falls back to <see cref="double"/>.
+    /// </summary>
+    private static object ToNumber(JsonElement element) =>
+        element.TryGetInt64(out var integer) ? integer
+        : element.TryGetDecimal(out var exact) ? exact
+        : element.GetDouble();
+
     private static object? ToValue(JsonElement element) => element.ValueKind switch
     {
         JsonValueKind.Object => ToScriptObject(element),
         JsonValueKind.Array  => element.EnumerateArray().Select(ToValue).ToArray(),
         JsonValueKind.String => element.GetString(),
-        JsonValueKind.Number => element.TryGetInt64(out var l) ? (object)l : element.GetDouble(),
+        JsonValueKind.Number => ToNumber(element),
         JsonValueKind.True   => true,
         JsonValueKind.False  => false,
         _                    => null

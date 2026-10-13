@@ -55,6 +55,20 @@ public sealed class TemplateRendererTests(ChromiumFixture chromium) : IClassFixt
 
     [Theory]
     [MemberData(nameof(Modes))]
+    public async Task Numbers_stay_exact_as_written(string mode)
+    {
+        await using var session = await StartAsync(mode);
+
+        var html = await session.Renderer.RenderHtmlAsync(
+            "{{ a + b }} {{ price * qty }} {{ count }} {{ huge > 1e300 }}",
+            Json("""{"a":0.1,"b":0.2,"price":19.99,"qty":3,"count":42,"huge":1e301}"""),
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal("0.3 59.97 42 true", html);
+    }
+
+    [Theory]
+    [MemberData(nameof(Modes))]
     public async Task Data_that_is_not_an_object_is_refused(string mode)
     {
         await using var session = await StartAsync(mode);
