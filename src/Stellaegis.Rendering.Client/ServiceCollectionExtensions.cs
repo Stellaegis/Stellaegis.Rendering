@@ -10,7 +10,7 @@ namespace Stellaegis.Rendering.Client;
 public static class ServiceCollectionExtensions
 {
     /// <summary>
-    /// Registers <see cref="IRenderingClient"/> backed by an HTTP client targeting the rendering API.
+    /// Registers <see cref="ITemplateRenderer"/> backed by an HTTP client targeting the rendering API.
     /// </summary>
     /// <remarks>
     /// The client sends requests as they are: authenticating them is the caller's concern. Add a
@@ -40,7 +40,7 @@ public static class ServiceCollectionExtensions
     {
         services.Configure<RenderingClientOptions>(configuration.GetSection(sectionName));
 
-        return services.AddHttpClient<IRenderingClient, RenderingClient>((sp, http) =>
+        return services.AddHttpClient<ITemplateRenderer, HttpTemplateRenderer>((sp, http) =>
         {
             var opts = sp.GetRequiredService<IOptions<RenderingClientOptions>>().Value;
             http.BaseAddress = new Uri(opts.BaseUrl.TrimEnd('/') + "/");

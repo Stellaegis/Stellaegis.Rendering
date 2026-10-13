@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Stellaegis.Rendering.AspNetCore/Stellaegis.Rendering.AspNetCore.csproj" />
+    <Project Path="src/Stellaegis.Rendering.Client/Stellaegis.Rendering.Client.csproj" />
+    <Project Path="src/Stellaegis.Rendering.Playwright/Stellaegis.Rendering.Playwright.csproj" />
+    <Project Path="src/Stellaegis.Rendering.Scriban/Stellaegis.Rendering.Scriban.csproj" />
+    <Project Path="src/Stellaegis.Rendering/Stellaegis.Rendering.csproj" />
+  </Folder>
+</Solution>

@@ -1,6 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Stellaegis.Rendering.Pdf;
 
 namespace Stellaegis.Rendering;
 
@@ -10,17 +9,20 @@ namespace Stellaegis.Rendering;
 public static class ServiceCollectionExtensions
 {
     /// <summary>
-    /// Registers <see cref="IHtmlRenderer"/> (Scriban) and <see cref="IPdfRenderer"/> (Playwright/Chromium).
-    /// Both are registered as singletons; the Chromium browser is lazily initialised on the first PDF request.
+    /// Registers the in-process <see cref="ITemplateRenderer"/>, which renders with the engines
+    /// registered in the same container: an <see cref="IHtmlRenderer"/>, required, and an
+    /// <see cref="IPdfRenderer"/>, needed only to render PDF.
     /// </summary>
-    /// <remarks>
-    /// Docker setup: ensure Chromium is installed in the image.
-    /// <code>RUN dotnet tool install --global Microsoft.Playwright.CLI &amp;&amp; playwright install chromium --with-deps</code>
-    /// </remarks>
+    /// <example>
+    /// <code>
+    /// builder.Services.AddStellaegisRendering()
+    ///     .AddStellaegisScribanRenderer()
+    ///     .AddStellaegisPlaywrightRenderer();
+    /// </code>
+    /// </example>
     public static IServiceCollection AddStellaegisRendering(this IServiceCollection services)
     {
-        services.TryAddSingleton<IHtmlRenderer, ScribanHtmlRenderer>();
-        services.TryAddSingleton<IPdfRenderer, PlaywrightPdfRenderer>();
+        services.TryAddSingleton<ITemplateRenderer, TemplateRenderer>();
         return services;
     }
 }

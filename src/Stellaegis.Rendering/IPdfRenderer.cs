@@ -1,7 +1,7 @@
-namespace Stellaegis.Rendering.Pdf;
+namespace Stellaegis.Rendering;
 
 /// <summary>
-/// Renders an HTML string to PDF bytes using a headless browser.
+/// Renders an HTML string to PDF bytes — the port of a PDF engine.
 /// </summary>
 public interface IPdfRenderer
 {

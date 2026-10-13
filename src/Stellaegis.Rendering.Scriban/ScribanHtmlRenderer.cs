@@ -2,14 +2,14 @@ using System.Text.Json;
 using Scriban;
 using Scriban.Runtime;
 
-namespace Stellaegis.Rendering;
+namespace Stellaegis.Rendering.Scriban;
 
 /// <summary>
 /// Renders Scriban templates to HTML strings.
 /// JSON properties are mapped to Scriban top-level variables using snake_case keys.
 /// </summary>
 /// <inheritdoc cref="IHtmlRenderer"/>
-public sealed class ScribanHtmlRenderer : IHtmlRenderer
+internal sealed class ScribanHtmlRenderer : IHtmlRenderer
 {
     /// <inheritdoc />
     public async Task<string> RenderAsync(

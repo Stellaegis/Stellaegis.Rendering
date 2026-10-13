@@ -1,6 +1,6 @@
 using Microsoft.Playwright;
 
-namespace Stellaegis.Rendering.Pdf;
+namespace Stellaegis.Rendering.Playwright;
 
 /// <summary>
 /// Renders HTML to PDF using a shared Playwright Chromium browser instance.
@@ -11,7 +11,7 @@ namespace Stellaegis.Rendering.Pdf;
 /// <code>RUN dotnet tool install --global Microsoft.Playwright.CLI &amp;&amp; playwright install chromium --with-deps</code>
 /// <para>Or install via the NuGet post-build target with the env var <c>PLAYWRIGHT_BROWSERS_PATH</c>.</para>
 /// </remarks>
-public sealed class PlaywrightPdfRenderer : IPdfRenderer, IAsyncDisposable
+internal sealed class PlaywrightPdfRenderer : IPdfRenderer, IAsyncDisposable
 {
     private IPlaywright? _playwright;
     private IBrowser?    _browser;
@@ -49,7 +49,7 @@ public sealed class PlaywrightPdfRenderer : IPdfRenderer, IAsyncDisposable
         try
         {
             if (_browser is not null) return _browser;
-            _playwright = await Playwright.CreateAsync().WaitAsync(ct);
+            _playwright = await global::Microsoft.Playwright.Playwright.CreateAsync().WaitAsync(ct);
             _browser    = await _playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
             {
                 Headless = true,

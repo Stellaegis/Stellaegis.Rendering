@@ -1,4 +1,4 @@
-namespace Stellaegis.Rendering.Pdf;
+namespace Stellaegis.Rendering;
 
 /// <summary>Paper format and margin settings for PDF generation.</summary>
 public sealed class PdfOptions
