@@ -54,7 +54,7 @@ jobs:
       # would be skipped, and a version would ship with the confinement unproven: a skipped test
       # fails the run.
       - name: Test
-        run: dotnet test Stellaegis.Rendering.slnx -c Release --no-build -- xUnit.FailSkips=true
+        run: dotnet test --solution Stellaegis.Rendering.slnx -c Release --no-build --fail-skips on
 
       - name: Pack
         run: dotnet pack Stellaegis.Rendering.slnx -c Release --no-build

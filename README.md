@@ -204,7 +204,7 @@ The same call fails the same way in both setups:
 ## Building and testing
 
 ```sh
-dotnet test Stellaegis.Rendering.slnx
+dotnet test --solution Stellaegis.Rendering.slnx
 ```
 
 The same test cases run against the in-process renderer and against the client calling the endpoints

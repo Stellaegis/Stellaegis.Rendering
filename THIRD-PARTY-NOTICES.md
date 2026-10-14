@@ -16,5 +16,5 @@ Microsoft.Playwright carries the Playwright driver and a Node.js runtime, under 
 package declares. The Chromium browser is not part of any package: Playwright's installation script
 downloads it onto the machine that prints, under Chromium's own licenses.
 
-Test-only dependencies (xUnit, Microsoft.NET.Test.Sdk, ASP.NET Core TestHost) are not part of any
+Test-only dependencies (xUnit, ASP.NET Core TestHost) are not part of any
 package and are not listed here.
