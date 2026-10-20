@@ -222,7 +222,7 @@ The same call fails the same way in both setups:
 | Exception | Cause |
 | --- | --- |
 | `ArgumentException` | A blank template, or data that is not a JSON object. The client checks it before sending; a caller that is not the client gets a `400` problem, whose detail is shown in `Development` only. |
-| `TemplateException` | The template does not parse, or fails while rendering. Fixing it means changing the template; retrying does not help. Over HTTP, the endpoints answer a `400` problem of type `urn:stellaegis:rendering:template-error`, which the client raises again as `TemplateException`. |
+| `TemplateException` | The template does not parse, or fails while rendering. Fixing it means changing the template; retrying does not help. It is a `UserFacingException` of code `Template.Invalid`, `TemplateException.Code`. Over HTTP, the endpoints answer a `400` problem carrying that code, which the client raises again as `TemplateException`; the problem keeps its 4.0 type, `urn:stellaegis:rendering:template-error`, until the next major version. |
 | `HttpRequestException` | Remote setup only: the host could not be reached, or refused the call. The message keeps what the host answered. |
 
 ## Building and testing

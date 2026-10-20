@@ -99,6 +99,7 @@ public sealed class TemplateRendererTests(ChromiumFixture chromium) : IClassFixt
         var parse = await Assert.ThrowsAsync<TemplateException>(
             () => session.Renderer.RenderHtmlAsync("{{ if }}", Json("{}"), ct));
         Assert.StartsWith("Template parse error(s):", parse.Message);
+        Assert.Equal(TemplateException.Code, parse.Error.Code);
 
         var runtime = await Assert.ThrowsAsync<TemplateException>(
             () => session.Renderer.RenderHtmlAsync("{{ x.y.z() }}", Json("{}"), ct));

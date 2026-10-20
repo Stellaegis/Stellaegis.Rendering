@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Encodings.Web;
+using System.Text.Json;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -9,6 +10,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Stellaegis.Primitives;
+using Stellaegis.Primitives.AspNetCore;
 using Stellaegis.Rendering.AspNetCore;
 using static Stellaegis.Rendering.Tests.Rendering;
 
@@ -73,17 +76,52 @@ public sealed class RenderingApiTests
     /// straight into the client, so a client-side test alone would pass without the 400.
     /// </remarks>
     [Fact]
-    public async Task A_template_at_fault_is_answered_400_with_its_problem_type()
+    public async Task A_template_at_fault_is_answered_400_with_its_code_and_its_problem_type()
     {
         await using var session = await StartRemoteAsync(app => app.MapGroup("/api").MapRenderingEndpoints().AllowAnonymous());
         var ct = TestContext.Current.CancellationToken;
 
         using var response = await session.HttpClient!.PostAsJsonAsync(
             "/api/rendering/html", new { template = "{{ if }}", data = new { } }, ct);
+        using var answer = JsonDocument.Parse(await response.Content.ReadAsStringAsync(ct));
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
-        Assert.Contains(TemplateException.ProblemType, await response.Content.ReadAsStringAsync(ct));
+        Assert.Equal(TemplateException.Code, answer.RootElement.GetProperty("code").GetString());
+        Assert.Equal(TemplateException.ProblemType, answer.RootElement.GetProperty("type").GetString());
+        Assert.StartsWith("Template parse error(s):", answer.RootElement.GetProperty("detail").GetString());
+    }
+
+    /// <remarks>
+    /// The rendering API answers the problem type beside the code, which would hide a client that no longer reads
+    /// the code: this host answers the code alone, as the error translation does.
+    /// </remarks>
+    [Fact]
+    public async Task A_template_at_fault_is_recognised_by_its_code()
+    {
+        await using var session = await StartRemoteAsync(app =>
+            app.MapPost("/api/rendering/html", () => Results.Problem(
+                Error.Validation(TemplateException.Code, "Template parse error(s): answered with its code alone.")
+                    .ToProblemDetails())));
+
+        var error = await Assert.ThrowsAsync<TemplateException>(() => session.Renderer.RenderHtmlAsync(
+            "{{ if }}", Json("{}"), TestContext.Current.CancellationToken));
+        Assert.Equal("Template parse error(s): answered with its code alone.", error.Message);
+    }
+
+    [Fact]
+    public async Task A_template_at_fault_from_a_4_0_host_is_still_recognised()
+    {
+        await using var session = await StartRemoteAsync(app =>
+            app.MapPost("/api/rendering/html", () => Results.Problem(
+                detail: "Template parse error(s): as a 4.0 host answers it.",
+                statusCode: StatusCodes.Status400BadRequest,
+                title: "The template is at fault.",
+                type: TemplateException.ProblemType)));
+
+        var error = await Assert.ThrowsAsync<TemplateException>(() => session.Renderer.RenderHtmlAsync(
+            "{{ if }}", Json("{}"), TestContext.Current.CancellationToken));
+        Assert.Equal("Template parse error(s): as a 4.0 host answers it.", error.Message);
     }
 
     [Fact]

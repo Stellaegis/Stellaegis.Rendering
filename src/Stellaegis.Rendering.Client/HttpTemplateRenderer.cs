@@ -53,12 +53,16 @@ internal sealed class HttpTemplateRenderer(HttpClient http) : ITemplateRenderer
     /// <summary>
     /// Like <see cref="HttpResponseMessage.EnsureSuccessStatusCode"/>, but keeps what the host said:
     /// a <c>400</c> names the faulty field, which the status code alone does not. A template at fault
-    /// is raised as <see cref="TemplateException"/>, as it is in process.
+    /// is raised as <see cref="TemplateException"/>, as it is in process: recognised by its code, or by
+    /// <see cref="TemplateException.ProblemType"/> from a 4.0 host, which answers no code.
     /// </summary>
     private static async Task EnsureSuccessAsync(HttpResponseMessage response, CancellationToken ct)
     {
-        if (response.IsSuccessStatusCode)
+        if (await response.ReadErrorAsync(ct) is not { } error)
             return;
+
+        if (error.Code == TemplateException.Code)
+            throw new TemplateException(error.Message);
 
         var body = await response.Content.ReadAsStringAsync(ct);
 

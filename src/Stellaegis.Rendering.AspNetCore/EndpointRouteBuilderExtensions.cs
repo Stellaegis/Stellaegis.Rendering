@@ -116,13 +116,19 @@ public static class EndpointRouteBuilderExtensions
             .Any(module => module.Name == RenderingModule.Name && module.Capabilities.Contains(RenderingCapabilities.Pdf));
 
     /// <summary>
-    /// A template at fault is the caller's to fix: <c>400</c>, with a problem type the client
-    /// recognises to raise <see cref="TemplateException"/> again.
+    /// A template at fault is the caller's to fix: <c>400</c>, with the code the client recognises to raise
+    /// <see cref="TemplateException"/> again.
     /// </summary>
-    private static IResult TemplateProblem(TemplateException e) =>
-        Results.Problem(
-            detail: e.Message,
-            statusCode: StatusCodes.Status400BadRequest,
-            title: "The template is at fault.",
-            type: TemplateException.ProblemType);
+    /// <remarks>
+    /// Answered here rather than by the error translation, which leaves <c>type</c> to ASP.NET Core: a 4.0 client
+    /// recognises a template at fault by <see cref="TemplateException.ProblemType"/> only. This catch goes with that
+    /// type, in the next major version.
+    /// </remarks>
+    private static IResult TemplateProblem(TemplateException e)
+    {
+        var problem = e.Error.ToProblemDetails();
+        problem.Type = TemplateException.ProblemType;
+        problem.Title = "The template is at fault.";
+        return Results.Problem(problem);
+    }
 }
