@@ -8,7 +8,7 @@
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.13" />
     <PackageVersion Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.13" />
     <!-- Stellaegis -->
-    <PackageVersion Include="Stellaegis.Primitives" Version="2.0.0" />
+    <PackageVersion Include="Stellaegis.Primitives" Version="4.1.0" />
     <!-- Rendering -->
     <PackageVersion Include="Scriban" Version="7.5.0" />
     <PackageVersion Include="Microsoft.Playwright" Version="1.63.0" />
