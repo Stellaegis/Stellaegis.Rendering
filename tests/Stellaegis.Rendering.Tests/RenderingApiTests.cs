@@ -26,7 +26,7 @@ public sealed class RenderingApiTests
             {
                 app.UseAuthentication();
                 app.UseAuthorization();
-                app.MapGroup("/api").MapRenderingEndpoints(authorizationPolicy: "rendering");
+                app.MapGroup("/api").MapRenderingEndpoints().RequireAuthorization("rendering");
             },
             builder =>
             {
@@ -40,20 +40,12 @@ public sealed class RenderingApiTests
         Assert.Equal(HttpStatusCode.Unauthorized, error.StatusCode);
     }
 
-    [Fact]
-    public void A_policy_name_is_required()
-    {
-        var app = WebApplication.CreateBuilder().Build();
-
-        Assert.Throws<ArgumentException>(() => app.MapRenderingEndpoints(authorizationPolicy: " "));
-    }
-
     [Theory]
     [InlineData("""{"template":" ","data":{}}""", "template")]
     [InlineData("""{"template":"{{ v }}","data":[1]}""", "'data'")]
     public async Task A_request_the_engine_would_refuse_is_answered_400(string body, string named)
     {
-        await using var session = await StartRemoteAsync(app => app.MapGroup("/api").MapRenderingEndpointsAnonymous());
+        await using var session = await StartRemoteAsync(app => app.MapGroup("/api").MapRenderingEndpoints().AllowAnonymous());
         var ct = TestContext.Current.CancellationToken;
 
         foreach (var route in new[] { "/api/rendering/html", "/api/rendering/pdf" })
@@ -73,7 +65,7 @@ public sealed class RenderingApiTests
     [Fact]
     public async Task A_template_at_fault_is_answered_400_with_its_problem_type()
     {
-        await using var session = await StartRemoteAsync(app => app.MapGroup("/api").MapRenderingEndpointsAnonymous());
+        await using var session = await StartRemoteAsync(app => app.MapGroup("/api").MapRenderingEndpoints().AllowAnonymous());
         var ct = TestContext.Current.CancellationToken;
 
         using var response = await session.HttpClient!.PostAsJsonAsync(

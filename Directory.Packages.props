@@ -10,6 +10,7 @@
     <!-- Stellaegis -->
     <PackageVersion Include="Stellaegis.Primitives" Version="4.1.0" />
     <PackageVersion Include="Stellaegis.Primitives.DependencyInjection" Version="4.1.0" />
+    <PackageVersion Include="Stellaegis.Primitives.AspNetCore" Version="4.1.0" />
     <!-- Rendering -->
     <PackageVersion Include="Scriban" Version="7.5.0" />
     <PackageVersion Include="Microsoft.Playwright" Version="1.63.0" />

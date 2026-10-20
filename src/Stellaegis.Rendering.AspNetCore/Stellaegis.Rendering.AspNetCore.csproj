@@ -4,12 +4,13 @@
     <TargetFramework>net10.0</TargetFramework>
     <RootNamespace>Stellaegis.Rendering.AspNetCore</RootNamespace>
     <PackageId>Stellaegis.Rendering.AspNetCore</PackageId>
-    <Description>Stellaegis rendering ASP.NET Core integration: maps the template-to-HTML and template-to-PDF endpoints, behind an authorization policy or explicitly anonymous.</Description>
+    <Description>Stellaegis rendering ASP.NET Core integration: maps the template-to-HTML and template-to-PDF endpoints, each labelled with its operation, closed until the host declares their authorization.</Description>
     <PackageTags>stellaegis;rendering;pdf;html;aspnetcore</PackageTags>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Stellaegis.Rendering\Stellaegis.Rendering.csproj" />
+    <PackageReference Include="Stellaegis.Primitives.AspNetCore" />
   </ItemGroup>
 
   <ItemGroup>

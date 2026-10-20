@@ -58,27 +58,40 @@ One process hosts the engines and exposes them over HTTP. Other processes render
 that implements the same `ITemplateRenderer`. This keeps Chromium on a single machine, at the cost of
 one network call per rendering and of a host to secure.
 
-On the host, map the endpoints under a route group and name the authorization policy that protects
-them:
+On the host, register the endpoints beside the engines, map them under a route group, and attach
+your security to the group:
 
 ```csharp
 builder.Services.AddStellaegisRendering()
     .AddStellaegisScribanRenderer()
-    .AddStellaegisPlaywrightRenderer(builder.Configuration);
+    .AddStellaegisPlaywrightRenderer(builder.Configuration)
+    .AddStellaegisRenderingEndpoints();
 builder.Services.AddAuthentication(/* your scheme */);
 builder.Services.AddAuthorization(o => o.AddPolicy("rendering", p => p.RequireAuthenticatedUser()));
 
 var app = builder.Build();
 app.UseAuthentication();
 app.UseAuthorization();
-app.MapGroup("/api").MapRenderingEndpoints(authorizationPolicy: "rendering");
+app.MapGroup("/api").MapRenderingEndpoints().RequireAuthorization("rendering");
 ```
 
-Each request carries its own template, and printing a PDF runs a browser on the host. Access is
-therefore always declared explicitly: either a policy, as above, or, on a host that only a trusted
-network can reach, `MapRenderingEndpointsAnonymous()`. Two endpoints are mapped under the group:
-`POST rendering/html` and `POST rendering/pdf`. Everything else about the host is yours to
-configure: the authentication scheme, CORS, rate limiting, forwarded headers, health checks.
+Two endpoints are mapped under the group, each labelled with its operation from
+`RenderingOperations`, both of kind `Read`:
+
+| Route | Operation |
+| --- | --- |
+| `POST rendering/html` | `templates.render_html` |
+| `POST rendering/pdf` | `templates.render_pdf` |
+
+A host with a rights system of its own protects them apart, one policy per operation:
+`.RequireAuthorizationPerOperation(op => op.ToString())`.
+
+Each request carries its own template, and printing a PDF runs a browser on the host. The endpoints
+are therefore closed until you declare their authorization: a host that maps them without
+`RequireAuthorization(...)`, `RequireAuthorizationPerOperation(...)` or, on a host that only a trusted
+network can reach, `AllowAnonymous()`, fails at startup. They load no resource, so they ask for no
+authorization handler. Everything else about the host is yours to configure: the authentication
+scheme, CORS, rate limiting, forwarded headers, health checks.
 
 In the calling process, register the client and attach the authentication your host expects, as a
 `DelegatingHandler`:

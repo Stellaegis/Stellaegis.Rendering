@@ -2,6 +2,8 @@ using System.Text.Json;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using Stellaegis.Primitives;
+using Stellaegis.Primitives.AspNetCore;
 
 namespace Stellaegis.Rendering.AspNetCore;
 
@@ -11,7 +13,8 @@ namespace Stellaegis.Rendering.AspNetCore;
 /// </summary>
 /// <remarks>
 /// <para>
-/// Two endpoints, relative to the builder they are mapped on:
+/// Two endpoints, relative to the builder they are mapped on, each labelled with its operation from
+/// <see cref="RenderingOperations"/>:
 /// </para>
 /// <list type="bullet">
 ///   <item><c>POST rendering/html</c> — render a template to HTML</item>
@@ -19,58 +22,47 @@ namespace Stellaegis.Rendering.AspNetCore;
 /// </list>
 /// <para>
 /// They render with whatever <see cref="ITemplateRenderer"/> the host registers — in practice the
-/// in-process one, over the engines registered beside it.
+/// in-process one, over the engines registered beside it. They load no resource: the request carries
+/// its template and its data.
 /// </para>
 /// <para>
-/// Each request carries its own template, and rendering a PDF runs a browser on the host, so access
-/// is never left implicit: either name the authorization policy that protects the endpoints, or open
-/// them deliberately with <see cref="MapRenderingEndpointsAnonymous"/>. Everything else about the
-/// host — authentication schemes, CORS, rate limiting, forwarded headers, health checks — is the
-/// caller's to configure.
+/// Rendering a PDF runs a browser on the host, so access is never left implicit: the endpoints are
+/// closed until the host declares their authorization on the returned group, and the startup check
+/// (<see cref="ServiceCollectionExtensions.AddStellaegisRenderingEndpoints"/>) fails a host that
+/// declares none. Everything else about the host — authentication schemes, CORS, rate limiting,
+/// forwarded headers, health checks — is the caller's to configure.
 /// </para>
 /// </remarks>
 /// <example>
 /// <code>
 /// builder.Services.AddStellaegisRendering()
 ///     .AddStellaegisScribanRenderer()
-///     .AddStellaegisPlaywrightRenderer(builder.Configuration);
+///     .AddStellaegisPlaywrightRenderer(builder.Configuration)
+///     .AddStellaegisRenderingEndpoints();
 /// builder.Services.AddAuthentication(...);
-/// builder.Services.AddAuthorization(o => o.AddPolicy("rendering", p => ...));
+/// builder.Services.AddAuthorization(...);
 ///
 /// var app = builder.Build();
 /// app.UseAuthentication();
 /// app.UseAuthorization();
-/// app.MapGroup("/api").MapRenderingEndpoints(authorizationPolicy: "rendering");
+/// app.MapGroup("/api").MapRenderingEndpoints()
+///    .RequireAuthorizationPerOperation(op => op.ToString());   // "templates.render_html", "templates.render_pdf"
 /// </code>
 /// </example>
 public static class EndpointRouteBuilderExtensions
 {
     /// <summary>
-    /// Maps the rendering endpoints, each call required to satisfy <paramref name="authorizationPolicy"/>.
+    /// Maps the rendering endpoints, each labelled with its operation from <see cref="RenderingOperations"/>,
+    /// and none secured: the host attaches its security to the returned group.
     /// </summary>
     /// <param name="endpoints">The builder to map the endpoints on — the application, or a route group.</param>
-    /// <param name="authorizationPolicy">Name of the authorization policy every call must satisfy.</param>
-    /// <returns>The group holding the endpoints, for further conventions.</returns>
-    public static RouteGroupBuilder MapRenderingEndpoints(this IEndpointRouteBuilder endpoints, string authorizationPolicy)
+    /// <returns>The group holding the endpoints, for the host's security and further conventions.</returns>
+    public static RouteGroupBuilder MapRenderingEndpoints(this IEndpointRouteBuilder endpoints)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(authorizationPolicy);
-        return MapEndpoints(endpoints).RequireAuthorization(authorizationPolicy);
-    }
+        Guard.NotNull(endpoints);
 
-    /// <summary>
-    /// Maps the rendering endpoints with no authorization at all: anyone who can reach the host can
-    /// have it render any template. Meant for hosts reachable only from a trusted network.
-    /// </summary>
-    /// <param name="endpoints">The builder to map the endpoints on — the application, or a route group.</param>
-    /// <returns>The group holding the endpoints, for further conventions.</returns>
-    public static RouteGroupBuilder MapRenderingEndpointsAnonymous(this IEndpointRouteBuilder endpoints) =>
-        MapEndpoints(endpoints).AllowAnonymous();
-
-    private static RouteGroupBuilder MapEndpoints(IEndpointRouteBuilder endpoints)
-    {
-        ArgumentNullException.ThrowIfNull(endpoints);
-
-        var group = endpoints.MapGroup("rendering");
+        var group = endpoints.MapGroup("rendering")
+            .BelongsTo<RenderingModule>();
 
         group.MapPost("/html", async (
                 RenderHtmlRequest request,
@@ -90,7 +82,8 @@ public static class EndpointRouteBuilderExtensions
                     return TemplateProblem(e);
                 }
             })
-            .WithName("RenderHtml")
+            .WithMetadata(RenderingOperations.RenderHtml)
+            .LoadsNoResource()
             .ProducesProblem(StatusCodes.Status400BadRequest);
 
         group.MapPost("/pdf", async (
@@ -111,7 +104,8 @@ public static class EndpointRouteBuilderExtensions
                     return TemplateProblem(e);
                 }
             })
-            .WithName("RenderPdf")
+            .WithMetadata(RenderingOperations.RenderPdf)
+            .LoadsNoResource()
             .ProducesProblem(StatusCodes.Status400BadRequest);
 
         return group;

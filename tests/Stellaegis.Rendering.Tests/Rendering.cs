@@ -38,7 +38,7 @@ internal static class Rendering
     public static async Task<Session> StartAsync(string mode) => mode switch
     {
         InProcess => Session.Of(new ServiceCollection().AddEngines().BuildServiceProvider()),
-        Remote    => await StartRemoteAsync(app => app.MapGroup("/api").MapRenderingEndpointsAnonymous()),
+        Remote    => await StartRemoteAsync(app => app.MapGroup("/api").MapRenderingEndpoints().AllowAnonymous()),
         _         => throw new ArgumentOutOfRangeException(nameof(mode), mode, null)
     };
 
@@ -50,7 +50,7 @@ internal static class Rendering
     {
         var builder = WebApplication.CreateBuilder();
         builder.WebHost.UseTestServer();
-        builder.Services.AddEngines();
+        builder.Services.AddEngines().AddStellaegisRenderingEndpoints();
         configure?.Invoke(builder);
 
         var app = builder.Build();
