@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Stellaegis.Primitives;
 using Stellaegis.Primitives.AspNetCore;
+using Stellaegis.Primitives.DependencyInjection;
 
 namespace Stellaegis.Rendering.AspNetCore;
 
@@ -18,7 +19,8 @@ namespace Stellaegis.Rendering.AspNetCore;
 /// </para>
 /// <list type="bullet">
 ///   <item><c>POST rendering/html</c> — render a template to HTML</item>
-///   <item><c>POST rendering/pdf</c>  — render a template to PDF, in a single call</item>
+///   <item><c>POST rendering/pdf</c>  — render a template to PDF, in a single call; mapped only when a PDF
+///   engine declares <see cref="RenderingCapabilities.Pdf"/></item>
 /// </list>
 /// <para>
 /// They render with whatever <see cref="ITemplateRenderer"/> the host registers — in practice the
@@ -53,7 +55,8 @@ public static class EndpointRouteBuilderExtensions
 {
     /// <summary>
     /// Maps the rendering endpoints, each labelled with its operation from <see cref="RenderingOperations"/>,
-    /// and none secured: the host attaches its security to the returned group.
+    /// and none secured: the host attaches its security to the returned group. The PDF route is mapped only when a
+    /// registered PDF engine declares <see cref="RenderingCapabilities.Pdf"/>: a host without one has no such route.
     /// </summary>
     /// <param name="endpoints">The builder to map the endpoints on — the application, or a route group.</param>
     /// <returns>The group holding the endpoints, for the host's security and further conventions.</returns>
@@ -86,6 +89,9 @@ public static class EndpointRouteBuilderExtensions
             .LoadsNoResource()
             .ProducesProblem(StatusCodes.Status400BadRequest);
 
+        if (!HoldsPdf(endpoints.ServiceProvider))
+            return group;
+
         group.MapPost("/pdf", async (
                 RenderPdfRequest request,
                 ITemplateRenderer renderer,
@@ -110,6 +116,10 @@ public static class EndpointRouteBuilderExtensions
 
         return group;
     }
+
+    private static bool HoldsPdf(IServiceProvider services) =>
+        services.GetStellaegisModules()
+            .Any(module => module.Name == RenderingModule.Name && module.Capabilities.Contains(RenderingCapabilities.Pdf));
 
     /// <summary>
     /// A template at fault is the caller's to fix: <c>400</c>, with a problem type the client

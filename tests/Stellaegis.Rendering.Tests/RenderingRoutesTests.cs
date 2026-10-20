@@ -14,6 +14,7 @@ using Stellaegis.Primitives;
 using Stellaegis.Primitives.AspNetCore;
 using Stellaegis.Rendering.AspNetCore;
 using Stellaegis.Rendering.Client;
+using Stellaegis.Rendering.Scriban;
 using static Stellaegis.Rendering.Tests.Rendering;
 
 namespace Stellaegis.Rendering.Tests;
@@ -50,6 +51,21 @@ public sealed class RenderingRoutesTests
         Assert.Equal(RenderingOperations.RenderPdf, operations["/api/rendering/pdf"]);
         Assert.All(operations.Values, operation => Assert.Equal(OperationKind.Read, operation!.Kind));
         Assert.Equal("templates.render_html", RenderingOperations.RenderHtml.ToString());
+    }
+
+    [Fact]
+    public async Task A_host_without_a_PDF_engine_maps_no_PDF_route()
+    {
+        await using var app = Host(services => services.AddStellaegisRendering().AddStellaegisScribanRenderer()
+            .AddStellaegisRenderingEndpoints());
+        app.MapGroup("/api").MapRenderingEndpoints().AllowAnonymous();
+        await app.StartAsync(TestContext.Current.CancellationToken);
+
+        var routes = ((IEndpointRouteBuilder)app).DataSources
+            .SelectMany(source => source.Endpoints).OfType<RouteEndpoint>()
+            .Select(endpoint => endpoint.RoutePattern.RawText);
+
+        Assert.Equal(["/api/rendering/html"], routes);
     }
 
     [Fact]

@@ -52,6 +52,16 @@ The PDF engine is optional. Without `AddStellaegisPlaywrightRenderer`, HTML rend
 `RenderPdfAsync` throws an `InvalidOperationException` that names the package to add. A service that
 only sends emails, for instance, registers the HTML engine alone and never installs Chromium.
 
+The PDF engine declares the module's capability `RenderingCapabilities.Pdf`. An application that
+needs PDF says so, and then fails at startup, rather than on its first PDF, when no engine holds it:
+
+```csharp
+builder.Services.AddStellaegisModuleParameter<RenderingModule>(RenderingCapabilities.Pdf);
+```
+
+An ASP.NET Core host checks it by itself at startup; an application without ASP.NET Core calls
+`ValidateStellaegisModules()` once its services are built (`Stellaegis.Primitives.DependencyInjection`).
+
 ## Rendering on a remote host
 
 One process hosts the engines and exposes them over HTTP. Other processes render through a client
@@ -76,7 +86,8 @@ app.MapGroup("/api").MapRenderingEndpoints().RequireAuthorization("rendering");
 ```
 
 Two endpoints are mapped under the group, each labelled with its operation from
-`RenderingOperations`, both of kind `Read`:
+`RenderingOperations`, both of kind `Read`. The PDF route is mapped only when a PDF engine is
+registered: a host without one has no such route.
 
 | Route | Operation |
 | --- | --- |

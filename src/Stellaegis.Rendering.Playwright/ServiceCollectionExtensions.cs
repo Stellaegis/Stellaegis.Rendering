@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Stellaegis.Primitives.DependencyInjection;
 
 namespace Stellaegis.Rendering.Playwright;
 
@@ -12,6 +13,8 @@ public static class ServiceCollectionExtensions
     /// <summary>
     /// Registers the Playwright <see cref="IPdfRenderer"/>, as a singleton sharing one Chromium
     /// browser, launched on the first PDF and confined as <see cref="PlaywrightRendererOptions"/> says.
+    /// Declares <see cref="RenderingCapabilities.Pdf"/> for <see cref="RenderingModule"/>, which
+    /// <c>AddStellaegisRendering</c> declares.
     /// </summary>
     /// <remarks>
     /// Chromium must be installed on the host, by the script Playwright places in the application's
@@ -34,6 +37,7 @@ public static class ServiceCollectionExtensions
     {
         services.Configure<PlaywrightRendererOptions>(configuration.GetSection(sectionName));
         services.TryAddSingleton<IPdfRenderer, PlaywrightPdfRenderer>();
+        services.AddStellaegisModuleCapability<RenderingModule>(RenderingCapabilities.Pdf);
         return services;
     }
 }

@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Stellaegis.Primitives;
 using Stellaegis.Primitives.DependencyInjection;
+using Stellaegis.Rendering.Scriban;
 
 namespace Stellaegis.Rendering.Tests;
 
@@ -28,5 +29,30 @@ public sealed class ModuleDeclarationTests
             Assert.Equal(RenderingModule.Name, module.Name);
             provider.ValidateStellaegisModules();
         }
+    }
+
+    [Fact]
+    public void A_PDF_engine_declares_the_PDF_capability()
+    {
+        using var withEngine = new ServiceCollection().AddEngines().BuildServiceProvider();
+        using var htmlOnly = new ServiceCollection().AddStellaegisRendering().AddStellaegisScribanRenderer().BuildServiceProvider();
+
+        Assert.Contains(RenderingCapabilities.Pdf, Assert.Single(withEngine.GetStellaegisModules()).Capabilities);
+        Assert.Empty(Assert.Single(htmlOnly.GetStellaegisModules()).Capabilities);
+    }
+
+    [Fact]
+    public void An_application_that_needs_PDF_fails_without_a_PDF_engine()
+    {
+        using var withEngine = new ServiceCollection().AddEngines()
+            .AddStellaegisModuleParameter<RenderingModule>(RenderingCapabilities.Pdf)
+            .BuildServiceProvider();
+        using var htmlOnly = new ServiceCollection().AddStellaegisRendering().AddStellaegisScribanRenderer()
+            .AddStellaegisModuleParameter<RenderingModule>(RenderingCapabilities.Pdf)
+            .BuildServiceProvider();
+
+        withEngine.ValidateStellaegisModules();
+        var error = Assert.Throws<InvalidOperationException>(htmlOnly.ValidateStellaegisModules);
+        Assert.Contains("pdf", error.Message);
     }
 }
