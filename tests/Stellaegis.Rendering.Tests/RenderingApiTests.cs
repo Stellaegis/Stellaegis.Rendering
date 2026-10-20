@@ -76,7 +76,7 @@ public sealed class RenderingApiTests
     /// straight into the client, so a client-side test alone would pass without the 400.
     /// </remarks>
     [Fact]
-    public async Task A_template_at_fault_is_answered_400_with_its_code_and_its_problem_type()
+    public async Task A_template_at_fault_is_answered_400_with_its_code()
     {
         await using var session = await StartRemoteAsync(app => app.MapGroup("/api").MapRenderingEndpoints().AllowAnonymous());
         var ct = TestContext.Current.CancellationToken;
@@ -88,14 +88,9 @@ public sealed class RenderingApiTests
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
         Assert.Equal(TemplateException.Code, answer.RootElement.GetProperty("code").GetString());
-        Assert.Equal(TemplateException.ProblemType, answer.RootElement.GetProperty("type").GetString());
         Assert.StartsWith("Template parse error(s):", answer.RootElement.GetProperty("detail").GetString());
     }
 
-    /// <remarks>
-    /// The rendering API answers the problem type beside the code, which would hide a client that no longer reads
-    /// the code: this host answers the code alone, as the error translation does.
-    /// </remarks>
     [Fact]
     public async Task A_template_at_fault_is_recognised_by_its_code()
     {
@@ -109,32 +104,49 @@ public sealed class RenderingApiTests
         Assert.Equal("Template parse error(s): answered with its code alone.", error.Message);
     }
 
+
     [Fact]
-    public async Task A_template_at_fault_from_a_4_0_host_is_still_recognised()
+    public async Task A_failure_keeps_the_code_and_the_message_the_host_answered()
     {
         await using var session = await StartRemoteAsync(app =>
             app.MapPost("/api/rendering/html", () => Results.Problem(
-                detail: "Template parse error(s): as a 4.0 host answers it.",
-                statusCode: StatusCodes.Status400BadRequest,
-                title: "The template is at fault.",
-                type: TemplateException.ProblemType)));
+                Error.Conflict("Host.Busy", "The host says why.").ToProblemDetails())));
 
-        var error = await Assert.ThrowsAsync<TemplateException>(() => session.Renderer.RenderHtmlAsync(
-            "{{ if }}", Json("{}"), TestContext.Current.CancellationToken));
-        Assert.Equal("Template parse error(s): as a 4.0 host answers it.", error.Message);
+        var error = await Assert.ThrowsAsync<HttpRequestException>(() => session.Renderer.RenderHtmlAsync(
+            "{{ v }}", Json("{}"), TestContext.Current.CancellationToken));
+
+        Assert.Equal(HttpStatusCode.Conflict, error.StatusCode);
+        Assert.Contains("409 Host.Busy: The host says why.", error.Message);
     }
 
+    // An answer that is not problem details says nothing of what its body holds: the reason phrase stands for it.
     [Fact]
-    public async Task A_failure_keeps_what_the_host_answered()
+    public async Task A_failure_that_is_not_problem_details_keeps_the_status()
     {
         await using var session = await StartRemoteAsync(app =>
-            app.MapPost("/api/rendering/html", () => Results.BadRequest("The host says why.")));
+            app.MapPost("/api/rendering/html", () => Results.BadRequest("<html>an error page</html>")));
 
         var error = await Assert.ThrowsAsync<HttpRequestException>(() => session.Renderer.RenderHtmlAsync(
             "{{ v }}", Json("{}"), TestContext.Current.CancellationToken));
 
         Assert.Equal(HttpStatusCode.BadRequest, error.StatusCode);
-        Assert.Contains("The host says why.", error.Message);
+        Assert.DoesNotContain("error page", error.Message);
+        Assert.Contains("400", error.Message);
+    }
+
+    [Fact]
+    public async Task PDF_options_at_fault_are_answered_400_with_their_code()
+    {
+        await using var session = await StartRemoteAsync(app => app.MapGroup("/api").MapRenderingEndpoints().AllowAnonymous());
+        var ct = TestContext.Current.CancellationToken;
+
+        using var response = await session.HttpClient!.PostAsJsonAsync(
+            "/api/rendering/pdf", new { template = "<p/>", data = new { }, options = new { format = "A9" } }, ct);
+        using var answer = JsonDocument.Parse(await response.Content.ReadAsStringAsync(ct));
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal(PdfOptionsException.Code, answer.RootElement.GetProperty("code").GetString());
+        Assert.Contains("'A9' is not a paper format", answer.RootElement.GetProperty("detail").GetString());
     }
 
     /// <summary>An authentication scheme that never authenticates anyone.</summary>

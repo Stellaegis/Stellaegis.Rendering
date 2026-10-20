@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Stellaegis.Primitives;
 using Stellaegis.Primitives.AspNetCore;
-using Stellaegis.Primitives.DependencyInjection;
+using Stellaegis.Primitives.Hosting;
 
 namespace Stellaegis.Rendering.AspNetCore;
 
@@ -24,7 +24,9 @@ namespace Stellaegis.Rendering.AspNetCore;
 /// <para>
 /// They render with whatever <see cref="ITemplateRenderer"/> the host registers — in practice the
 /// in-process one, over the engines registered beside it. They load no resource: the request carries
-/// its template and its data.
+/// its template and its data. What the caller gets wrong — a blank template, a template at fault, PDF options no
+/// engine prints — is answered as a <c>400</c> problem by the error translation of Stellaegis.Primitives, with the
+/// code the client recognises.
 /// </para>
 /// <para>
 /// Rendering a PDF runs a browser on the host, so access is never left implicit: the endpoints are
@@ -72,15 +74,8 @@ public static class EndpointRouteBuilderExtensions
                 ITemplateRenderer renderer,
                 CancellationToken ct) =>
             {
-                try
-                {
-                    var rendered = await renderer.RenderHtmlAsync(request.Template, request.Data, ct);
-                    return Results.Text(rendered, "text/html");
-                }
-                catch (TemplateException e)
-                {
-                    return TemplateProblem(e);
-                }
+                var rendered = await renderer.RenderHtmlAsync(request.Template, request.Data, ct);
+                return Results.Text(rendered, "text/html");
             })
             .WithMetadata(RenderingOperations.RenderHtml)
             .LoadsNoResource()
@@ -94,15 +89,8 @@ public static class EndpointRouteBuilderExtensions
                 ITemplateRenderer renderer,
                 CancellationToken ct) =>
             {
-                try
-                {
-                    var bytes = await renderer.RenderPdfAsync(request.Template, request.Data, request.Options, ct);
-                    return Results.Bytes(bytes, "application/pdf");
-                }
-                catch (TemplateException e)
-                {
-                    return TemplateProblem(e);
-                }
+                var bytes = await renderer.RenderPdfAsync(request.Template, request.Data, request.Options, ct);
+                return Results.Bytes(bytes, "application/pdf");
             })
             .WithMetadata(RenderingOperations.RenderPdf)
             .LoadsNoResource()
@@ -112,23 +100,5 @@ public static class EndpointRouteBuilderExtensions
     }
 
     private static bool HoldsPdf(IServiceProvider services) =>
-        services.GetStellaegisModules()
-            .Any(module => module.Name == RenderingModule.Name && module.Capabilities.Contains(RenderingCapabilities.Pdf));
-
-    /// <summary>
-    /// A template at fault is the caller's to fix: <c>400</c>, with the code the client recognises to raise
-    /// <see cref="TemplateException"/> again.
-    /// </summary>
-    /// <remarks>
-    /// Answered here rather than by the error translation, which leaves <c>type</c> to ASP.NET Core: a 4.0 client
-    /// recognises a template at fault by <see cref="TemplateException.ProblemType"/> only. This catch goes with that
-    /// type, in the next major version.
-    /// </remarks>
-    private static IResult TemplateProblem(TemplateException e)
-    {
-        var problem = e.Error.ToProblemDetails();
-        problem.Type = TemplateException.ProblemType;
-        problem.Title = "The template is at fault.";
-        return Results.Problem(problem);
-    }
+        services.GetStellaegisModule<RenderingModule>()?.Capabilities.Contains(RenderingCapabilities.Pdf) == true;
 }

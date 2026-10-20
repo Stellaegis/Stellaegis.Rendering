@@ -2,7 +2,8 @@ namespace Stellaegis.Rendering.Playwright;
 
 /// <summary>
 /// How far Chromium is confined while it prints a PDF.
-/// Bind from the <c>Stellaegis:Rendering:Playwright</c> configuration section.
+/// Bound from the <c>Stellaegis:Rendering:Playwright</c> configuration section by
+/// <c>AddStellaegisPlaywrightRenderer</c>.
 /// </summary>
 /// <remarks>
 /// These belong to the host and never to a request: on a remote host, the template comes from the

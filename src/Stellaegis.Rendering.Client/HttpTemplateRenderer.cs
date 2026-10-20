@@ -11,18 +11,13 @@ namespace Stellaegis.Rendering.Client;
 /// </summary>
 internal sealed class HttpTemplateRenderer(HttpClient http) : ITemplateRenderer
 {
-    // An error body is quoted in the exception message; a host answering with a full HTML error page
-    // would otherwise flood the logs.
-    private const int MaxQuotedErrorLength = 1000;
-
     /// <inheritdoc />
     public async Task<string> RenderHtmlAsync(
         string template,
         JsonElement data,
         CancellationToken cancellationToken = default)
     {
-        Guard.NotWhiteSpace(template);
-        Guard.Satisfies(data, d => d.ValueKind == JsonValueKind.Object, "The data must be a JSON object.");
+        RenderingArguments.Check(template, data);
 
         using var response = await http.PostAsJsonAsync(
             "html",
@@ -39,8 +34,8 @@ internal sealed class HttpTemplateRenderer(HttpClient http) : ITemplateRenderer
         PdfOptions? options = null,
         CancellationToken cancellationToken = default)
     {
-        Guard.NotWhiteSpace(template);
-        Guard.Satisfies(data, d => d.ValueKind == JsonValueKind.Object, "The data must be a JSON object.");
+        RenderingArguments.Check(template, data);
+        options?.Validate();
 
         using var response = await http.PostAsJsonAsync(
             "pdf",
@@ -51,46 +46,23 @@ internal sealed class HttpTemplateRenderer(HttpClient http) : ITemplateRenderer
     }
 
     /// <summary>
-    /// Like <see cref="HttpResponseMessage.EnsureSuccessStatusCode"/>, but keeps what the host said:
-    /// a <c>400</c> names the faulty field, which the status code alone does not. A template at fault
-    /// is raised as <see cref="TemplateException"/>, as it is in process: recognised by its code, or by
-    /// <see cref="TemplateException.ProblemType"/> from a 4.0 host, which answers no code.
+    /// Reads the error the host answered, once, and raises the managed exceptions as they are raised in process,
+    /// recognised by their code: a template at fault, PDF options at fault. Any other failure keeps the code and the
+    /// message the host answered, when it answered problem details — the reason phrase otherwise.
     /// </summary>
     private static async Task EnsureSuccessAsync(HttpResponseMessage response, CancellationToken ct)
     {
         if (await response.ReadErrorAsync(ct) is not { } error)
             return;
 
-        if (error.Code == TemplateException.Code)
-            throw new TemplateException(error.Message);
-
-        var body = await response.Content.ReadAsStringAsync(ct);
-
-        if (response.Content.Headers.ContentType?.MediaType == "application/problem+json"
-            && TryReadProblem(body) is { Type: TemplateException.ProblemType } problem)
-            throw new TemplateException(problem.Detail ?? "The template is at fault.");
-
-        if (body.Length > MaxQuotedErrorLength)
-            body = body[..MaxQuotedErrorLength] + "…";
-
-        throw new HttpRequestException(
-            $"The rendering API answered {(int)response.StatusCode} ({response.ReasonPhrase}): {body}",
-            inner: null,
-            response.StatusCode);
-    }
-
-    private static Problem? TryReadProblem(string body)
-    {
-        try
+        throw error.Code switch
         {
-            return JsonSerializer.Deserialize<Problem>(body, JsonSerializerOptions.Web);
-        }
-        catch (JsonException)
-        {
-            return null;
-        }
+            TemplateException.Code => new TemplateException(error.Message),
+            PdfOptionsException.Code => new PdfOptionsException(error.Message),
+            _ => new HttpRequestException(
+                $"The rendering API answered {(int)response.StatusCode}{(error.Code.Length > 0 ? " " + error.Code : "")}: {error.Message}",
+                inner: null,
+                response.StatusCode),
+        };
     }
-
-    /// <summary>The two fields of an RFC 9457 problem the client reads.</summary>
-    private sealed record Problem(string? Type, string? Detail);
 }

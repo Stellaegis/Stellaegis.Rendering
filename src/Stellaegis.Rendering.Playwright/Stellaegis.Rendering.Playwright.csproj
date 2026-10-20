@@ -10,8 +10,6 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Playwright" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
-    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" />
     <ProjectReference Include="..\Stellaegis.Rendering\Stellaegis.Rendering.csproj" />
   </ItemGroup>
 

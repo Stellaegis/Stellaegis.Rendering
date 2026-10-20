@@ -5,6 +5,53 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.0.0] — 2026-10-20
+
+Rendering takes the shape of a Stellaegis 5 module: its operations are declared by the module, in its core;
+what the caller gets wrong is answered with a code, PDF options included; the client and the engines take the
+common forms of `Stellaegis.Primitives.Hosting`. The five packages move together to 5.0.0, on
+Stellaegis.Primitives 5.0.0.
+
+### Added
+
+- `PdfOptions.Formats`, the paper formats an engine prints, and `PdfOptions.FindError()`: a format outside them
+  or a margin that is not a CSS length is refused before any engine runs, as `PdfOptionsException`, a
+  `UserFacingException` of code `PdfOptions.Invalid`, in both modes — the endpoints answer a `400` carrying that
+  code, which the client raises again. A `PlaywrightException` no longer answers for the caller's request.
+- `AddStellaegisRenderingClient(Action<RenderingClientOptions>)` and
+  `AddStellaegisPlaywrightRenderer(Action<PlaywrightRendererOptions>)`, to configure in code.
+
+### Changed
+
+- **Breaking.** Stellaegis.Primitives 5.0.0: `Stellaegis.Primitives.Hosting` replaces
+  `Stellaegis.Primitives.DependencyInjection`, and brings the Microsoft.Extensions abstractions the packages
+  referenced themselves.
+- **Breaking.** `RenderingOperations` lives in `Stellaegis.Rendering`, next to the module, which declares both
+  operations on its declaration; `Stellaegis.Rendering.AspNetCore` only carries them on the routes.
+- **Breaking.** `RenderingClientOptions` derives from `StellaegisClientOptions`: `BaseUrl` is no longer `required`,
+  and an address that is not an absolute http or https URL, or a timeout that is not positive, fails the host at
+  startup rather than the first call.
+- The options of the Playwright engine are validated at startup like every option of the family.
+- The client reads a failed answer once, through `ReadErrorAsync()`: an `HttpRequestException` keeps the code and
+  the message of problem details, and the status alone of an answer that is not problem details — the body is no
+  longer quoted.
+- A blank template or data that is not a JSON object is refused in one place, for every adapter.
+
+### Removed
+
+- `TemplateException.ProblemType` and the problem type `urn:stellaegis:rendering:template-error`, deprecated in
+  4.1.0: a template at fault is recognised by its code alone, `Template.Invalid`, and the endpoints answer it
+  through the error translation of Stellaegis.Primitives, `type` being ASP.NET Core's default for the status.
+
+### Migrating from 4.1.0
+
+1. Reference `Stellaegis.Primitives.Hosting` instead of `Stellaegis.Primitives.DependencyInjection`, where a host
+   referenced it; `ValidateStellaegisModules()` and `GetStellaegisModules()` moved with it.
+2. Replace `using Stellaegis.Rendering.AspNetCore;` by `using Stellaegis.Rendering;` where `RenderingOperations`
+   is read.
+3. Code reading the `type` of a `400` answer reads its `code` extension instead.
+4. Code expecting a `PlaywrightException` on a bad paper format catches `PdfOptionsException`.
+
 ## [4.1.0] — 2026-10-20
 
 A template at fault carries a code, `Template.Invalid`, which the client recognises it by. Nothing

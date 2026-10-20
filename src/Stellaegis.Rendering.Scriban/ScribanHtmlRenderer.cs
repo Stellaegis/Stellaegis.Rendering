@@ -2,7 +2,6 @@ using System.Text.Json;
 using Scriban;
 using Scriban.Runtime;
 using Scriban.Syntax;
-using Stellaegis.Primitives;
 
 namespace Stellaegis.Rendering.Scriban;
 
@@ -28,8 +27,7 @@ internal sealed class ScribanHtmlRenderer : IHtmlRenderer
         JsonElement data,
         CancellationToken cancellationToken = default)
     {
-        Guard.NotWhiteSpace(template);
-        Guard.Satisfies(data, d => d.ValueKind == JsonValueKind.Object, "The data must be a JSON object.");
+        RenderingArguments.Check(template, data);
 
         var tpl = Template.Parse(template);
         if (tpl.HasErrors)

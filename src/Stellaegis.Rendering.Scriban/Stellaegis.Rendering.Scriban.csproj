@@ -10,7 +10,6 @@
 
   <ItemGroup>
     <PackageReference Include="Scriban" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
     <ProjectReference Include="..\Stellaegis.Rendering\Stellaegis.Rendering.csproj" />
   </ItemGroup>
 

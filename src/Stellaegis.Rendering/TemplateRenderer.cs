@@ -1,5 +1,4 @@
 using System.Text.Json;
-using Stellaegis.Primitives;
 
 namespace Stellaegis.Rendering;
 
@@ -9,7 +8,8 @@ namespace Stellaegis.Rendering;
 /// </summary>
 /// <remarks>
 /// The PDF engine is optional, so a consumer that renders only HTML does not carry a browser:
-/// without one, <see cref="RenderPdfAsync"/> fails and nothing else does.
+/// without one, <see cref="RenderPdfAsync"/> fails and nothing else does. What the caller gets wrong is refused
+/// before any engine runs: the arguments, and the PDF options.
 /// </remarks>
 internal sealed class TemplateRenderer(IHtmlRenderer html, IPdfRenderer? pdf = null) : ITemplateRenderer
 {
@@ -17,8 +17,11 @@ internal sealed class TemplateRenderer(IHtmlRenderer html, IPdfRenderer? pdf = n
     public Task<string> RenderHtmlAsync(
         string template,
         JsonElement data,
-        CancellationToken cancellationToken = default) =>
-        html.RenderAsync(template, data, cancellationToken);
+        CancellationToken cancellationToken = default)
+    {
+        RenderingArguments.Check(template, data);
+        return html.RenderAsync(template, data, cancellationToken);
+    }
 
     /// <inheritdoc />
     public async Task<byte[]> RenderPdfAsync(
@@ -27,7 +30,8 @@ internal sealed class TemplateRenderer(IHtmlRenderer html, IPdfRenderer? pdf = n
         PdfOptions? options = null,
         CancellationToken cancellationToken = default)
     {
-        Guard.NotWhiteSpace(template);
+        RenderingArguments.Check(template, data);
+        options?.Validate();
 
         if (pdf is null)
             throw new InvalidOperationException(

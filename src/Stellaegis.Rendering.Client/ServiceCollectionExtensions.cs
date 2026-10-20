@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
+using Stellaegis.Primitives.Hosting;
 
 namespace Stellaegis.Rendering.Client;
 
@@ -10,7 +10,8 @@ namespace Stellaegis.Rendering.Client;
 public static class ServiceCollectionExtensions
 {
     /// <summary>
-    /// Registers <see cref="ITemplateRenderer"/> backed by an HTTP client targeting the rendering API.
+    /// Registers <see cref="ITemplateRenderer"/> backed by an HTTP client targeting the rendering API, its options
+    /// bound from <paramref name="sectionName"/> and validated when the host starts.
     /// </summary>
     /// <remarks>
     /// The client sends requests as they are: authenticating them is the caller's concern. Add a
@@ -36,15 +37,16 @@ public static class ServiceCollectionExtensions
     public static IHttpClientBuilder AddStellaegisRenderingClient(
         this IServiceCollection services,
         IConfiguration configuration,
-        string sectionName = RenderingClientOptions.SectionName)
-    {
-        services.Configure<RenderingClientOptions>(configuration.GetSection(sectionName));
+        string sectionName = RenderingClientOptions.SectionName) =>
+        services.AddStellaegisHttpClient<ITemplateRenderer, HttpTemplateRenderer, RenderingClientOptions>(configuration, sectionName);
 
-        return services.AddHttpClient<ITemplateRenderer, HttpTemplateRenderer>((sp, http) =>
-        {
-            var opts = sp.GetRequiredService<IOptions<RenderingClientOptions>>().Value;
-            http.BaseAddress = new Uri(opts.BaseUrl.TrimEnd('/') + "/");
-            http.Timeout     = opts.Timeout;
-        });
-    }
+    /// <summary>
+    /// Registers <see cref="ITemplateRenderer"/> backed by an HTTP client targeting the rendering API, its options
+    /// configured in code and validated when the host starts.
+    /// </summary>
+    /// <returns>The builder of the underlying HTTP client, to add handlers to.</returns>
+    public static IHttpClientBuilder AddStellaegisRenderingClient(
+        this IServiceCollection services,
+        Action<RenderingClientOptions> configure) =>
+        services.AddStellaegisHttpClient<ITemplateRenderer, HttpTemplateRenderer, RenderingClientOptions>(configure);
 }

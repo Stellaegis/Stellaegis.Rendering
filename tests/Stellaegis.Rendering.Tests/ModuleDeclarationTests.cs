@@ -1,6 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using Stellaegis.Primitives;
-using Stellaegis.Primitives.DependencyInjection;
+using Stellaegis.Primitives.Hosting;
 using Stellaegis.Rendering.Scriban;
 
 namespace Stellaegis.Rendering.Tests;
@@ -27,6 +27,7 @@ public sealed class ModuleDeclarationTests
 
             var module = Assert.Single(provider.GetStellaegisModules());
             Assert.Equal(RenderingModule.Name, module.Name);
+            Assert.Equal([RenderingOperations.RenderHtml, RenderingOperations.RenderPdf], module.Operations);
             provider.ValidateStellaegisModules();
         }
     }

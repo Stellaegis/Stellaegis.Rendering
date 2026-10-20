@@ -19,11 +19,11 @@ need it.
 
 | Package | Contents | Depends on |
 | --- | --- | --- |
-| `Stellaegis.Rendering` | `ITemplateRenderer`, the engine interfaces `IHtmlRenderer` and `IPdfRenderer`, `PdfOptions`, and the in-process renderer | `Stellaegis.Primitives`, Microsoft.Extensions abstractions |
+| `Stellaegis.Rendering` | `ITemplateRenderer`, the engine interfaces `IHtmlRenderer` and `IPdfRenderer`, `PdfOptions`, the module and its operations, and the in-process renderer | `Stellaegis.Primitives`, `Stellaegis.Primitives.Hosting` |
 | `Stellaegis.Rendering.Scriban` | The HTML engine: renders Scriban templates | Scriban |
 | `Stellaegis.Rendering.Playwright` | The PDF engine: prints HTML with Chromium | Microsoft.Playwright |
-| `Stellaegis.Rendering.AspNetCore` | Endpoints that expose a renderer over HTTP | ASP.NET Core |
-| `Stellaegis.Rendering.Client` | A renderer that calls those endpoints from another process | `Microsoft.Extensions.Http` |
+| `Stellaegis.Rendering.AspNetCore` | Endpoints that expose a renderer over HTTP | `Stellaegis.Primitives.AspNetCore`, ASP.NET Core |
+| `Stellaegis.Rendering.Client` | A renderer that calls those endpoints from another process | the HTTP client factory, through `Stellaegis.Primitives.Hosting` |
 
 Each engine package is named after the technology it uses. Another PDF engine could be added as a
 package of its own, next to `.Playwright`, without changing the interfaces.
@@ -59,8 +59,10 @@ needs PDF says so, and then fails at startup, rather than on its first PDF, when
 builder.Services.AddStellaegisModuleParameter<RenderingModule>(RenderingCapabilities.Pdf);
 ```
 
-An ASP.NET Core host checks it by itself at startup; an application without ASP.NET Core calls
-`ValidateStellaegisModules()` once its services are built (`Stellaegis.Primitives.DependencyInjection`).
+An ASP.NET Core host checks it by itself at startup; a generic host registers `AddStellaegisValidation()`, and
+an application without a host calls `ValidateStellaegisModules()` once its services are built
+(`Stellaegis.Primitives.Hosting`). The module declares its two operations, `RenderingOperations`, whatever the
+engines registered: they are what a host grants.
 
 ## Rendering on a remote host
 
@@ -86,8 +88,8 @@ app.MapGroup("/api").MapRenderingEndpoints().RequireAuthorization("rendering");
 ```
 
 Two endpoints are mapped under the group, each labelled with its operation from
-`RenderingOperations`, both of kind `Read`. The PDF route is mapped only when a PDF engine is
-registered: a host without one has no such route.
+`RenderingOperations`, declared by the module in `Stellaegis.Rendering`, both of kind `Read`. The PDF route is
+mapped only when a PDF engine is registered: a host without one has no such route.
 
 | Route | Operation |
 | --- | --- |
@@ -121,6 +123,10 @@ builder.Services.AddStellaegisRenderingClient(builder.Configuration)
   }
 }
 ```
+
+The client's options are validated when the host starts: an address that is not an absolute http or https URL,
+or a timeout that is not positive, fails the host rather than the first call. They can also be configured in
+code, `AddStellaegisRenderingClient(o => { … })`.
 
 A PDF is rendered in a single call: the client sends the template and its data, and receives the
 PDF. The intermediate HTML never travels over the network, which matters for large documents.
@@ -190,8 +196,10 @@ default, Chromium is therefore confined:
 
 These settings are read from the section `Stellaegis:Rendering:Playwright`. They belong to the host:
 a request cannot change them, since a request able to open the network would undo the confinement.
-`PdfOptions`, which travels with each request, only describes the page — its format, its margins,
-and whether backgrounds are printed.
+`PdfOptions`, which travels with each request, only describes the page — its format, one of
+`PdfOptions.Formats` (A0 to A6, Letter, Legal, Tabloid, Ledger), its margins, as CSS lengths, and whether
+backgrounds are printed. Options no engine prints are refused before any engine runs, in both modes, as
+`PdfOptionsException`.
 
 ```json
 {
@@ -222,8 +230,9 @@ The same call fails the same way in both setups:
 | Exception | Cause |
 | --- | --- |
 | `ArgumentException` | A blank template, or data that is not a JSON object. The client checks it before sending; a caller that is not the client gets a `400` problem, whose detail is shown in `Development` only. |
-| `TemplateException` | The template does not parse, or fails while rendering. Fixing it means changing the template; retrying does not help. It is a `UserFacingException` of code `Template.Invalid`, `TemplateException.Code`. Over HTTP, the endpoints answer a `400` problem carrying that code, which the client raises again as `TemplateException`; the problem keeps its 4.0 type, `urn:stellaegis:rendering:template-error`, until the next major version. |
-| `HttpRequestException` | Remote setup only: the host could not be reached, or refused the call. The message keeps what the host answered. |
+| `TemplateException` | The template does not parse, or fails while rendering. Fixing it means changing the template; retrying does not help. It is a `UserFacingException` of code `Template.Invalid`, `TemplateException.Code`. Over HTTP, the endpoints answer a `400` problem carrying that code, which the client raises again as `TemplateException`. |
+| `PdfOptionsException` | The PDF options describe a page no engine prints: a format outside `PdfOptions.Formats`, a margin that is not a CSS length. A `UserFacingException` of code `PdfOptions.Invalid`, raised before any engine runs, over HTTP as a `400` problem the client raises again. |
+| `HttpRequestException` | Remote setup only: the host could not be reached, or refused the call. The message keeps the code and the message the host answered as problem details, or its status alone. |
 
 ## Building and testing
 

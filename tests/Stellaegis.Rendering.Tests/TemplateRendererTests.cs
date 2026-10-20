@@ -106,6 +106,32 @@ public sealed class TemplateRendererTests(ChromiumFixture chromium) : IClassFixt
         Assert.StartsWith("Template runtime error:", runtime.Message);
     }
 
+    // Refused before any engine runs, so it needs no Chromium: a format no engine prints, a margin that is not a length.
+    [Theory]
+    [MemberData(nameof(Modes))]
+    public async Task PDF_options_at_fault_throw_PdfOptionsException(string mode)
+    {
+        await using var session = await StartAsync(mode);
+        var ct = TestContext.Current.CancellationToken;
+
+        var format = await Assert.ThrowsAsync<PdfOptionsException>(() => session.Renderer.RenderPdfAsync(
+            "<p/>", Json("{}"), new PdfOptions { Format = "A9" }, ct));
+        Assert.Contains("'A9' is not a paper format", format.Message);
+        Assert.Equal(PdfOptionsException.Code, format.Error.Code);
+
+        var margin = await Assert.ThrowsAsync<PdfOptionsException>(() => session.Renderer.RenderPdfAsync(
+            "<p/>", Json("{}"), new PdfOptions { Margin = new MarginOptions { Left = "wide" } }, ct));
+        Assert.Contains("Margin.Left 'wide' is not a CSS length", margin.Message);
+    }
+
+    [Fact]
+    public void PDF_options_hold_for_every_format_an_engine_prints()
+    {
+        foreach (var format in PdfOptions.Formats)
+            Assert.Null(new PdfOptions { Format = format }.FindError());
+        Assert.Null(new PdfOptions { Format = "a4", Margin = new MarginOptions { Top = "0.5in", Bottom = "12px" } }.FindError());
+    }
+
     [Theory]
     [MemberData(nameof(Modes))]
     public async Task A_PDF_is_rendered_in_a_single_call_with_its_paper_format(string mode)

@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Stellaegis.Primitives.DependencyInjection;
+using Stellaegis.Primitives.Hosting;
 
 namespace Stellaegis.Rendering.Playwright;
 
@@ -12,13 +12,14 @@ public static class ServiceCollectionExtensions
 {
     /// <summary>
     /// Registers the Playwright <see cref="IPdfRenderer"/>, as a singleton sharing one Chromium
-    /// browser, launched on the first PDF and confined as <see cref="PlaywrightRendererOptions"/> says.
-    /// Declares <see cref="RenderingCapabilities.Pdf"/> for <see cref="RenderingModule"/>, which
-    /// <c>AddStellaegisRendering</c> declares.
+    /// browser, launched on the first PDF and confined as <see cref="PlaywrightRendererOptions"/> says, bound from
+    /// <paramref name="sectionName"/>. Declares <see cref="RenderingCapabilities.Pdf"/> for
+    /// <see cref="RenderingModule"/>, which <c>AddStellaegisRendering</c> declares.
     /// </summary>
     /// <remarks>
     /// Chromium must be installed on the host, by the script Playwright places in the application's
-    /// output directory: <c>pwsh bin/Release/net10.0/playwright.ps1 install --with-deps chromium</c>.
+    /// output directory: <c>pwsh bin/Release/net10.0/playwright.ps1 install --with-deps chromium</c>. Its absence is
+    /// found at the first PDF, not at startup.
     /// </remarks>
     /// <example>
     /// appsettings.json — the defaults:
@@ -35,7 +36,23 @@ public static class ServiceCollectionExtensions
         IConfiguration configuration,
         string sectionName = PlaywrightRendererOptions.SectionName)
     {
-        services.Configure<PlaywrightRendererOptions>(configuration.GetSection(sectionName));
+        services.AddStellaegisOptions<PlaywrightRendererOptions>(configuration, sectionName);
+        return services.AddPlaywrightRenderer();
+    }
+
+    /// <summary>
+    /// Registers the Playwright <see cref="IPdfRenderer"/>, confined as <paramref name="configure"/> says.
+    /// </summary>
+    public static IServiceCollection AddStellaegisPlaywrightRenderer(
+        this IServiceCollection services,
+        Action<PlaywrightRendererOptions> configure)
+    {
+        services.AddStellaegisOptions(configure);
+        return services.AddPlaywrightRenderer();
+    }
+
+    private static IServiceCollection AddPlaywrightRenderer(this IServiceCollection services)
+    {
         services.TryAddSingleton<IPdfRenderer, PlaywrightPdfRenderer>();
         services.AddStellaegisModuleCapability<RenderingModule>(RenderingCapabilities.Pdf);
         return services;
