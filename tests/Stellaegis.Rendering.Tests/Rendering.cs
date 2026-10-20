@@ -46,9 +46,10 @@ internal static class Rendering
     /// An in-memory host mapped by <paramref name="map"/>, and the HTTP client pointed at it — the two
     /// ends of the wire.
     /// </summary>
-    public static async Task<Session> StartRemoteAsync(Action<WebApplication> map, Action<WebApplicationBuilder>? configure = null)
+    public static async Task<Session> StartRemoteAsync(
+        Action<WebApplication> map, Action<WebApplicationBuilder>? configure = null, string? environment = null)
     {
-        var builder = WebApplication.CreateBuilder();
+        var builder = WebApplication.CreateBuilder(new WebApplicationOptions { EnvironmentName = environment });
         builder.WebHost.UseTestServer();
         builder.Services.AddEngines().AddStellaegisRenderingEndpoints();
         configure?.Invoke(builder);

@@ -1,4 +1,3 @@
-using System.Text.Json;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
@@ -66,15 +65,13 @@ public static class EndpointRouteBuilderExtensions
 
         var group = endpoints.MapGroup("rendering")
             .BelongsTo<RenderingModule>();
+        group.AddErrorTranslation();
 
         group.MapPost("/html", async (
                 RenderHtmlRequest request,
                 ITemplateRenderer renderer,
                 CancellationToken ct) =>
             {
-                if (Validate(request.Template, request.Data) is { } error)
-                    return Results.BadRequest(error);
-
                 try
                 {
                     var rendered = await renderer.RenderHtmlAsync(request.Template, request.Data, ct);
@@ -97,9 +94,6 @@ public static class EndpointRouteBuilderExtensions
                 ITemplateRenderer renderer,
                 CancellationToken ct) =>
             {
-                if (Validate(request.Template, request.Data) is { } error)
-                    return Results.BadRequest(error);
-
                 try
                 {
                     var bytes = await renderer.RenderPdfAsync(request.Template, request.Data, request.Options, ct);
@@ -131,13 +125,4 @@ public static class EndpointRouteBuilderExtensions
             statusCode: StatusCodes.Status400BadRequest,
             title: "The template is at fault.",
             type: TemplateException.ProblemType);
-
-    private static string? Validate(string? template, JsonElement data)
-    {
-        if (string.IsNullOrWhiteSpace(template))
-            return "A non-empty 'template' is required.";
-        if (data.ValueKind != JsonValueKind.Object)
-            return "'data' must be a JSON object.";
-        return null;
-    }
 }

@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Stellaegis.Rendering.AspNetCore;
@@ -41,20 +42,29 @@ public sealed class RenderingApiTests
     }
 
     [Theory]
-    [InlineData("""{"template":" ","data":{}}""", "template")]
+    [InlineData("""{"template":" ","data":{}}""", "'template'")]
     [InlineData("""{"template":"{{ v }}","data":[1]}""", "'data'")]
-    public async Task A_request_the_engine_would_refuse_is_answered_400(string body, string named)
+    public async Task A_request_the_engine_would_refuse_is_answered_400_naming_the_argument_in_development_only(
+        string body, string named)
     {
-        await using var session = await StartRemoteAsync(app => app.MapGroup("/api").MapRenderingEndpoints().AllowAnonymous());
         var ct = TestContext.Current.CancellationToken;
 
-        foreach (var route in new[] { "/api/rendering/html", "/api/rendering/pdf" })
+        foreach (var environment in new[] { Environments.Production, Environments.Development })
         {
-            using var content  = new StringContent(body, System.Text.Encoding.UTF8, "application/json");
-            using var response = await session.HttpClient!.PostAsync(route, content, ct);
+            await using var session = await StartRemoteAsync(
+                app => app.MapGroup("/api").MapRenderingEndpoints().AllowAnonymous(),
+                environment: environment);
 
-            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-            Assert.Contains(named, await response.Content.ReadAsStringAsync(ct));
+            foreach (var route in new[] { "/api/rendering/html", "/api/rendering/pdf" })
+            {
+                using var content  = new StringContent(body, System.Text.Encoding.UTF8, "application/json");
+                using var response = await session.HttpClient!.PostAsync(route, content, ct);
+                var answer = await response.Content.ReadAsStringAsync(ct);
+
+                Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+                Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
+                Assert.Equal(environment == Environments.Development, answer.Contains(named));
+            }
         }
     }
 
