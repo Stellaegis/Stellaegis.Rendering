@@ -5,6 +5,33 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.1.0] — 2026-10-20
+
+A template at fault carries a code, `Template.Invalid`, which the client recognises it by. Nothing
+breaks: a 4.0.0 client still recognises it from a 4.1.0 host, and a 4.1.0 client from a 4.0.0 host.
+
+### Added
+
+- `TemplateException.Code`, `Template.Invalid`. The endpoints answer it as the `code` extension of
+  their `400` problem.
+
+### Changed
+
+- `TemplateException` is a `UserFacingException`, carrying a validation error of that code.
+- The client recognises a template at fault by its code, and still by the problem type a 4.0.0 host
+  answers.
+- Stellaegis.Primitives 4.3.0.
+
+### Deprecated
+
+- `TemplateException.ProblemType`. The endpoints still answer it beside the code; it goes in the next
+  major version. Recognise `TemplateException.Code` instead.
+
+### Updating from 4.0.0
+
+Nothing to change. Code that catches `TemplateException` keeps working; code that reads the problem
+type of an answer moves to its `code` extension before the next major version.
+
 ## [4.0.0] — 2026-10-20
 
 Rendering takes the shape of a Stellaegis 4 module: its routes carry their operations and stay closed
@@ -87,6 +114,7 @@ First release as a standalone library.
   included.
 - `TemplateException`, raised in both setups when the template is at fault.
 
+[4.1.0]: https://github.com/Stellaegis/Stellaegis.Rendering/releases/tag/v4.1.0
 [4.0.0]: https://github.com/Stellaegis/Stellaegis.Rendering/releases/tag/v4.0.0
 [1.0.1]: https://github.com/Stellaegis/Stellaegis.Rendering/releases/tag/v1.0.1
 [1.0.0]: https://github.com/Stellaegis/Stellaegis.Rendering/releases/tag/v1.0.0
