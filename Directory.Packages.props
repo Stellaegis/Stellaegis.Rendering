@@ -11,8 +11,8 @@
     <PackageVersion Include="Scriban" Version="7.5.1" />
     <PackageVersion Include="Microsoft.Playwright" Version="1.63.0" />
     <!-- Testing -->
-    <PackageVersion Include="xunit.v3" Version="4.0.2" />
-    <PackageVersion Include="Microsoft.Extensions.Configuration" Version="10.0.13" />
-    <PackageVersion Include="Microsoft.AspNetCore.TestHost" Version="10.0.13" />
+    <PackageVersion Include="xunit.v3" Version="4.0.3" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration" Version="10.0.14" />
+    <PackageVersion Include="Microsoft.AspNetCore.TestHost" Version="10.0.14" />
   </ItemGroup>
 </Project>
