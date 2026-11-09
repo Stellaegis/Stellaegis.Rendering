@@ -5,6 +5,28 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.1.0] — 2026-11-09
+
+On `Stellaegis.Primitives` 5.6.0, Playwright 1.64 and Scriban 7.6. Chromium renders HTML built from the application's
+data, and its fixes come with Playwright: this version takes them, and asks every machine that prints PDFs to
+install the Chromium it drives. Nothing changes in the module's code; the client already raised every error but a
+template or PDF options at fault, so that a 401 or a 403 of the rendering API, which Primitives 5.6.0 reads as a
+failure, raises as before.
+
+### Changed
+
+- **`Microsoft.Playwright` 1.64.1**, which drives `chromium-headless-shell` 1248, and **Scriban** 7.6.1.
+- **`Stellaegis.Primitives` 5.6.0 and Microsoft.Extensions 10.0.14.**
+
+### Updating from 5.0.0
+
+1. **Install Chromium again on every machine that prints PDFs**, from the build output of the host:
+   `pwsh bin/Release/net10.0/playwright.ps1 install --with-deps chromium`. Without it, the first PDF fails, the
+   browser Playwright 1.64 expects being absent. A process that renders HTML only installs nothing.
+2. A host meets what the startup of Primitives 5.6.0 now refuses, listed with its way out in the CHANGELOG of
+   Primitives, § *Updating from 5.5.0* — for this module, mostly that its routes carry their operations, and that a
+   client calling the rendering API in plain http to another machine declares `AllowPlainHttp`.
+
 ## [5.0.0] — 2026-10-20
 
 Rendering takes the shape of a Stellaegis 5 module: its operations are declared by the module, in its core;
